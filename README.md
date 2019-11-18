@@ -1,6 +1,6 @@
 # ROS2 Persistent Parameter Server
 
-This is the PoC project for ROS2 Persistent Parameter Server, that resides in the ROS2 system to serve the parameter daemon. The other nodes can write/read the parameter in Parameter Server, and Parameter Server is able to store the parameter into the persistent storage which user can specify such as tmpfs, nfs, or disk.
+This is the PoC project for ROS2 Persistent Parameter Server, that resides in the ROS2 system to serve the parameter daemon. The other nodes can write/read the parameter in Parameter Server, and ***Parameter Server is able to store the parameter into the persistent storage which user can specify such as tmpfs, nfs, or disk.***
 
 
 # Background
@@ -46,8 +46,8 @@ all of the configuration options will be passed via arguments as followings.
     <tbody>
         <tr>
             <td>Node Name</td>
-            <td>__node:=NODENAME</td>
-            <td>default parameter_server will be used, generic ROS2 cli parameter to change the node name to specify.</td>
+            <td>--ros-args --remap __node:=NODENAME</td>
+            <td>in default, "parameter_server" will be used.</td>
         </tr>
         <tr>
             <td>Help</td>
@@ -57,7 +57,7 @@ all of the configuration options will be passed via arguments as followings.
         <tr>
             <td>File Path</td>
             <td>--file-path FILE_PATH</td>
-            <td>default /tmp/parameter_server.yaml, if specified that path will be used to store/load the parameter yaml file.</td>
+            <td>in default, "/tmp/parameter_server.yaml" will be used. if specified, that path will be used to store/load the parameter yaml file.</td>
         </tr>
         <tr>
             <td rowspan=2>Node Options</td>
@@ -74,10 +74,9 @@ all of the configuration options will be passed via arguments as followings.
 ## Sequence
 
 1. parameter server is initialized via __params:=<xxx.yaml>
-   this is just a initial parameter to load into the parameter server's memory.
-   at this time, these parameters can be seen from the other nodes.
-2. parameter server loads parameter specified yaml file if existed via --file-path.
-   and then parameter server will overwrite or declare parameters to ROS2 system.
+   this is just a initial parameter(not persistent) to load into the parameter server's memory.
+2. parameter server loads parameter specified yaml file via --file-path.
+   and then parameter server will overwrite or declare parameters.
    (*) at #1 parameters might be overwritten.
 3.  parameter server starts the main loop with callback for parameter changes.
 4.  if the parameter changes are on "/persistent" that will be stored in storage at this time.
@@ -85,7 +84,78 @@ all of the configuration options will be passed via arguments as followings.
 
 # Getting Started
 
-[W.I.P]
+### Dependent Packages
+
+```
+apt install libyaml-cpp-dev
+apt install libboost-program-options1.65-dev libboost-filesystem1.65-dev
+```
+
+### Prerequisites
+
+currently verified only Ubuntu18.04.
+
+ros2 source build environment([Linux-Development-Setup/](https://index.ros.org/doc/ros2/Installation/Dashing/Linux-Development-Setup/)) is required to build and run the parameter server.
+
+### Build
+
+to install local colcon workspace,
+
+```
+# cd <colcon_workspace>/src
+# git clone https://github.com/fujitatomoya/ros2_persist_parameter_server
+# cd <colcon_workspace>
+# colcon list
+# colcon build
+# source install/local_setup.bash
+```
+
+## Run
+
+1. start parameter server.
+
+```
+# cp <colcon_workspace>/src/ros2_persist_parameter_server/server/param/parameter_server.yaml /tmp/
+
+# ros2 run parameter_server server
+[INFO] [parameter_server]: Parameter Server node named: '/parameter_server' started and ready, and serving '9' parameters already!
+...<snip>
+
+```
+
+2. update persistent parameter.
+
+```
+# ros2 param set /parameter_server persistent.some_int 81
+Set parameter successful
+# ros2 param set /parameter_server persistent.a_string Konnichiwa
+Set parameter successful
+# ros2 param set /parameter_server persistent.pi 3.14159265359
+Set parameter successful
+# ros2 param set /parameter_server persistent.some_lists.some_integers 81,82,83,84
+Set parameter successful
+```
+
+3. restart parameter server.
+
+```
+# ros2 run parameter_server server
+[INFO] [parameter_server]: Parameter Server node named: '/parameter_server' started and ready, and serving '9' parameters already!
+...<snip>
+```
+
+4. check persistent parameter is precisely cached and loaded into parameter server.
+
+```
+# ros2 param get /parameter_server persistent.a_string
+String value is: Konnichiwa
+# ros2 param get /parameter_server persistent.pi
+Double value is: 3.14159265359
+# ros2 param get /parameter_server persistent.some_int
+Integer value is: 81
+# ros2 param get /parameter_server persistent.some_lists.some_integers
+String value is: 81,82,83,84
+```
 
 ## Authors
 
