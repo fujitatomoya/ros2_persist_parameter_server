@@ -1,0 +1,18 @@
+/**:
+    ros__parameters:
+        # This file is expected to be used
+        # > ros2 run parameter_server server --ros-args --params-file <path_to>/parameters_via_cli.yaml
+        # 
+        # all of the parameters here cannot be registered as persistent parameter,
+        # since these are set internally with library and not able to detect via /parameter_events topic.
+        some_int: 1
+        a_string: "Hello world"
+        pi: 3.14
+        some_lists:
+            some_integers: [1, 2, 3, 4]
+        persistent:
+            some_int: 1
+            a_string: 'Hello world'
+            pi: 3.14
+            some_lists:
+                some_integers: [1, 2, 3, 4]
