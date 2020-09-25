@@ -1,6 +1,27 @@
 # ROS2 Persistent Parameter Server
+<!-- TOC -->
 
-This is the PoC project for ROS2 Persistent Parameter Server, that resides in the ROS2 system to serve the parameter daemon. The other nodes can write/read the parameter in Parameter Server, and ***Parameter Server is able to store the parameter into the persistent storage which user can specify such as tmpfs, nfs, or disk.***
+- [ROS2 Persistent Parameter Server](#ros2-persistent-parameter-server)
+- [Background](#background)
+- [Overview](#overview)
+    - [Persistent Parameter Registration](#persistent-parameter-registration)
+        - [Persistent Prefix](#persistent-prefix)
+        - [Scope Overview](#scope-overview)
+    - [Configurable Options](#configurable-options)
+    - [Sequence](#sequence)
+- [Getting Started](#getting-started)
+    - [Dependent Packages](#dependent-packages)
+    - [Prerequisites](#prerequisites)
+    - [Build](#build)
+    - [Run](#run)
+- [Use Client Demo](#use-client-demo)
+    - [Build](#build-1)
+    - [Run](#run-1)
+- [Authors](#authors)
+- [License](#license)
+
+<!-- /TOC -->
+This is the PoC project for ROS2 Persistent Parameter Server, that resides in the ROS2 system to serve the parameter daemon. The other nodes(e.g the client demo provided in the code) can write/read the parameter in Parameter Server, and ***Parameter Server is able to store the parameter into the persistent storage which user can specify such as tmpfs, nfs, or disk.***
 
 
 # Background
@@ -24,11 +45,11 @@ ROS2 Parameter Server is constructed on ROS parameter API's, nothing specific AP
 
 ## Persistent Parameter Registration
 
-#### Persistent Prefix
+### Persistent Prefix
 
 persistent parameter must have prefix ***"persistent"***
 
-#### Scope Overview
+### Scope Overview
 
 parameter server has the following scope for persistent parameter. since parameter server is built on top of ROS2 Parameter API, parameter server supports "persistent" parameter based on **/parameter_events** topic.
 
@@ -102,20 +123,20 @@ all of the configuration options will be passed via arguments as followings.
 
 # Getting Started
 
-### Dependent Packages
+## Dependent Packages
 
 ```
 apt install libyaml-cpp-dev
 apt install libboost-program-options1.65-dev libboost-filesystem1.65-dev
 ```
 
-### Prerequisites
+## Prerequisites
 
 currently verified only Ubuntu18.04.
 
 ros2 source build environment([Linux-Development-Setup/](https://index.ros.org/doc/ros2/Installation/Dashing/Linux-Development-Setup/)) is required to build and run the parameter server.
 
-### Build
+## Build
 
 to install local colcon workspace,
 
@@ -175,10 +196,70 @@ Integer value is: 81
 String value is: 81,82,83,84
 ```
 
-## Authors
+# Use Client Demo
+
+The client demo verifies the following functions
+
+ - persistent parameter can be read/stored to/from the file system.
+ - persistent parameter can be read/modified from parameter client.
+ - non-persistent parameter cannot be read/stored to/from the file system.
+ - non-persistent parameter can be read/modified from parameter client
+
+!!!NOTE The client demo provided does not support the use of the specified parameter name, it only demonstrates and verifies the basic functions of the parameter server.
+
+## Build
+The build steps are similar to the above build step, except that you need to install ros2 launch package with `respawn` feature support, which is only support in master branch now.
+
+```
+# cd <launch_workspace>/src
+# git clone https://github.com/ros2/launch.git
+# cd <launch_workspace> && colcon build
+# cd <colcon_workspace>/src
+# git clone https://github.com/fujitatomoya/ros2_persist_parameter_server
+# cd <colcon_workspace>
+# source <path-to-ros2_distro>/install/setup.bash   # ros2 eloquent or ros2 foxy was supported.
+# colcon build
+# source install/local_setup.bash
+# source <launch_workspace>/install/setup.bash
+```
+
+## Run
+
+start.py is the entry for test.
+start.py will call test.launch.py file to start persistent parameter server and the test client, it also creates a thread to kill parameter server after specified time. All function tests are finished in client.
+
+!!NOTE After the test is completed, you need to press `ctrl-c` to stop process manually.
+
+```
+# cd <colcon_workspace>/src/ros2_persist_parameter/client_demo
+# ./start.py
+```
+
+The phenomenon as below
+
+!!!NOTE Client has a 5-seconds sleep during server restarts.
+
+```
+......   // omit some output logs
+
+[ros2-2] [INFO] [1601285807.447139964] [client]: ***************************************************************************
+[ros2-2] [INFO] [1601285807.447167553] [client]: *********************************Test Result*******************************
+[ros2-2] [INFO] [1601285807.447188102] [client]: a. Read Normal Parameter : 		PASS
+[ros2-2] [INFO] [1601285807.447209567] [client]: b. Read Persistent Parameter : 		PASS
+[ros2-2] [INFO] [1601285807.447229844] [client]: c. Modify Existed Normal parameter : 		PASS
+[ros2-2] [INFO] [1601285807.447249582] [client]: d. Modify Existed Persistent parameter : 		PASS
+[ros2-2] [INFO] [1601285807.447267690] [client]: e. Add New Normal parameter : 		PASS
+[ros2-2] [INFO] [1601285807.447286431] [client]: f. Add New Persistent parameter : 		PASS
+[ros2-2] [INFO] [1601285807.447305231] [client]: g. Test Normal Parameter Not Stores To File : 		PASS
+[ros2-2] [INFO] [1601285807.447324266] [client]: h. Test Persistent Parameter Stores To File : 		PASS
+[ros2-2] [INFO] [1601285807.447355537] [client]: i. Test New Added Normal Parameter Not Stores To File : 		PASS
+[ros2-2] [INFO] [1601285807.447375761] [client]: j. Test New Added Persistent Parameter Stores To File : 		PASS
+```
+
+# Authors
 
 * **Tomoya Fujita** --- Tomoya.Fujita@sony.com
 
-## License
+# License
 
 Apache 2.0
