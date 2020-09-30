@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(client_demo)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-
-# Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
@@ -25,8 +19,8 @@ find_package(rmw REQUIRED)
 include_directories(include)
 
 add_executable(client
-    src/main.cpp
-    src/persist_parameter_client.cpp
+  src/main.cpp
+  src/persist_parameter_client.cpp
 )
 
 ament_target_dependencies(client rclcpp rclcpp_components)
@@ -35,8 +29,8 @@ install(TARGETS client DESTINATION lib/${PROJECT_NAME})
 
 # Install launch files.
 install(DIRECTORY
-	launch
-	DESTINATION share/${PROJECT_NAME}/
+  launch
+  DESTINATION share/${PROJECT_NAME}/
 )
 
 ament_package()

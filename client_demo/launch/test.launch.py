@@ -22,13 +22,11 @@ import os
 import sys 
 import pathlib
 
-respawn_delay = 0.0
-
 def generate_launch_description():
     return LaunchDescription([
         launch.actions.ExecuteProcess(
             cmd = ['ros2', 'run', 'parameter_server', 'server', '--file-path', '/tmp/parameter_server.yaml'],
-            respawn=True, respawn_delay=respawn_delay
+            respawn=True
         ),
         launch.actions.ExecuteProcess(
             cmd = ['ros2', 'run', 'client_demo', 'client']

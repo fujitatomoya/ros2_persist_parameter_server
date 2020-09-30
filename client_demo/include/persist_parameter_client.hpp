@@ -17,8 +17,6 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-using namespace rclcpp;
-using namespace rclcpp::node_interfaces::detail;
 using namespace std::chrono_literals;
 
 class PersistParametersClient : public rclcpp::Node
@@ -35,10 +33,10 @@ public:
 
   // Format the array value for easy output.
   template <typename ValueType>
-  inline void format_array_output(std::stringstream & ss, const std::vector<ValueType> & cont)
+  inline void format_array_output(std::ostringstream & ss, const std::vector<ValueType> & value_vec)
   {
     ss << "[ ";
-    for(const auto & value : cont) {
+    for(const auto & value : value_vec) {
       ss << value << " ";
     }
     ss << "]";
@@ -52,9 +50,8 @@ public:
     bool ret = false;
 
     if(rclcpp::ok()) {
-      std::chrono::seconds timeout = 5s;
       RCLCPP_INFO(this->get_logger(), "Waiting 5 seconds to wait for the parameter server to be ready...");
-      ret = sync_param_client_->wait_for_service(timeout);
+      ret = sync_param_client_->wait_for_service(5s);
     }
 
     return ret;
@@ -87,9 +84,9 @@ public:
     for (auto & result : set_param_result)
     {
       if (!result.successful)
-      {
-        ret = false;        
+      {        
         RCLCPP_INFO(this->get_logger(), "SET OPERATION : Failed to set parameter: %s", result.reason.c_str());
+        return false;
       }
     }
     RCLCPP_INFO(this->get_logger(), "SET OPERATION : Set parameter %s successfully.", param_name.c_str());
@@ -98,7 +95,7 @@ public:
   }
 
 private:
-   std::unique_ptr<SyncParametersClient> sync_param_client_;
+   std::unique_ptr<rclcpp::SyncParametersClient> sync_param_client_;
 };
 
 #endif

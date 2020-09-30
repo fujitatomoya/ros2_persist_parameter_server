@@ -18,25 +18,20 @@
 
 #include "persist_parameter_client.hpp"
 
-#include "rclcpp/parameter.hpp"
-#include "rclcpp/parameter_client.hpp"
-
 PersistParametersClient::PersistParametersClient(
   const std::string & client_name,
   const rclcpp::NodeOptions & node_options,
   const std::string & remote_node_name)
   : Node(client_name, node_options)
 {
-  sync_param_client_ = std::make_unique<SyncParametersClient>(this, remote_node_name);
+  sync_param_client_ = std::make_unique<rclcpp::SyncParametersClient>(this, remote_node_name);
 }
 
 bool PersistParametersClient::read_parameter(const std::string & param_name, std::vector<rclcpp::Parameter> & parameter)
 {
   bool ret = true;
-  std::vector<std::string> param_vec;
-  param_vec.push_back(param_name);
 
-  parameter = sync_param_client_->get_parameters(param_vec);
+  parameter = sync_param_client_->get_parameters({param_name});
   for(auto & param : parameter)
   {
       switch (param.get_type())
@@ -72,7 +67,7 @@ bool PersistParametersClient::read_parameter(const std::string & param_name, std
         }
         case rclcpp::ParameterType::PARAMETER_BYTE_ARRAY:
         {
-          std::stringstream ss;
+          std::ostringstream ss;
           auto array = param.as_byte_array();
           format_array_output<uint8_t>(ss, array);
           RCLCPP_INFO(this->get_logger(), "GET OPERATION : parameter %s's value is %s", param_name.c_str(), ss.str().c_str());
@@ -80,7 +75,7 @@ bool PersistParametersClient::read_parameter(const std::string & param_name, std
         }
         case rclcpp::ParameterType::PARAMETER_BOOL_ARRAY:
         {
-          std::stringstream ss;
+          std::ostringstream ss;
           auto array = param.as_bool_array();
           format_array_output<bool>(ss, array);
           RCLCPP_INFO(this->get_logger(), "GET OPERATION : parameter %s's value is %s", param_name.c_str(), ss.str().c_str());
@@ -88,7 +83,7 @@ bool PersistParametersClient::read_parameter(const std::string & param_name, std
         }
         case rclcpp::ParameterType::PARAMETER_INTEGER_ARRAY:
         {
-          std::stringstream ss;
+          std::ostringstream ss;
           auto array = param.as_integer_array();
           format_array_output<int64_t>(ss, array);
           RCLCPP_INFO(this->get_logger(), "GET OPERATION : parameter %s's value is %s", param_name.c_str(), ss.str().c_str());   
@@ -96,7 +91,7 @@ bool PersistParametersClient::read_parameter(const std::string & param_name, std
         }
         case rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY:
         {
-          std::stringstream ss;
+          std::ostringstream ss;
           auto array = param.as_double_array();
           format_array_output<double>(ss, array);
           RCLCPP_INFO(this->get_logger(), "GET OPERATION : parameter %s's value is %s", param_name.c_str(), ss.str().c_str());
@@ -104,7 +99,7 @@ bool PersistParametersClient::read_parameter(const std::string & param_name, std
         }
         case rclcpp::ParameterType::PARAMETER_STRING_ARRAY:
         {
-          std::stringstream ss;
+          std::ostringstream ss;
           auto array = param.as_string_array();
           format_array_output<std::string>(ss, array);
           RCLCPP_INFO(this->get_logger(), "GET OPERATION : parameter %s's value is %s", param_name.c_str(), ss.str().c_str());

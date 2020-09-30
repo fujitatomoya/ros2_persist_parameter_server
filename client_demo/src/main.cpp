@@ -12,32 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "persist_parameter_client.hpp"
 #include <map>
-#include <exception>
+#include <stdexcept>
 
-/* NoServerException
+#include "persist_parameter_client.hpp"
+
+/**
+ * NoServerError
  *
  * The client will wait 5 seconds for the server to be ready.
  * If not, then throw an exception to terminate the endless waiting.
  */
-struct NoServerException : public std::exception
+struct NoServerError : public std::runtime_error
 {
-  const char * what () const throw () {
-    return "Not find server";
-  }
+  public:
+    NoServerError()
+      : std::runtime_error("Not find server"){}
 };
 
-/* SetErrorException
+/* 
+ * SetOperationError
  *
  * When executing `set_parameter`, if the set operation failed, 
  * throw an exception to ignore the subsequent test.
  */
-struct SetErrorException : public std::exception
+struct SetOperationError : public std::runtime_error
 {
-  const char * what () const throw () {
-    return "set operation failed";
-  }
+  public:
+    SetOperationError()
+      : std::runtime_error("Set operation failed"){}
 };
 
 class TestPersistParameter
@@ -49,7 +52,7 @@ class TestPersistParameter
       : persist_param_client_(node_name, options)
     {
       if(!wait_param_server_ready()) {
-        throw NoServerException();
+        throw NoServerError();
       }
     }
 
@@ -108,42 +111,49 @@ class TestPersistParameter
        */
       if(!ret) {
         this->set_result(testcase, false);
-        throw SetErrorException();
+        throw SetOperationError();
       }
 
       return do_read_and_check(param_name, changed_value.c_str(), testcase);
     }
 
     // Get all test results.
-    inline void get_result() const
+    inline void print_result() const
     {
-      RCLCPP_INFO(get_logger("client"), "****************************************************"
+      RCLCPP_INFO(this->get_logger(), "****************************************************"
                                         "***********************");
-      RCLCPP_INFO(get_logger("client"), "*********************************Test Result*********"
+      RCLCPP_INFO(this->get_logger(), "*********************************Test Result*********"
                                         "**********************");
-      for(const auto & res : result_map) {
-        RCLCPP_INFO(get_logger("client"), "%s : \t\t%s", res.first.c_str(), res.second?"PASS":"NOT PASS");
+      for(const auto & res : result_map_) {
+        RCLCPP_INFO(this->get_logger(), "%-60s : %16s", res.first.c_str(), res.second?"PASS":"NOT PASS");
       }
 
       return;
     }
 
+    static inline rclcpp::Logger get_logger()
+    {
+      return client_logger_;
+    }
+
 private:
     // Save the result of each test operation.
-    inline void set_result(std::string key, bool value)
+    inline void set_result(const std::string & key, bool value)
     {
-      auto pair = result_map.insert(std::make_pair<std::string, bool>(std::move(key), std::move(value)));
+      auto pair = result_map_.insert({key, value});
       if(!pair.second) {
-        RCLCPP_INFO(get_logger("client"), "Failed when insert %s to result_map", key.c_str());
+        RCLCPP_INFO(this->get_logger(), "Failed when insert %s to result_map", key.c_str());
       }
 
       return;
     }
 
     PersistParametersClient persist_param_client_;
-    std::map<std::string, bool> result_map;
+    std::map<std::string, bool> result_map_;
+    static rclcpp::Logger client_logger_;
 };
-	
+rclcpp::Logger TestPersistParameter::client_logger_ = rclcpp::get_logger("client");
+
 int main(int argc, char ** argv)
 {
   // force flush of the stdout buffer.
@@ -152,10 +162,12 @@ int main(int argc, char ** argv)
   setvbuf(stdout, NULL, _IONBF, BUFSIZ);
 
   rclcpp::init(argc, argv);
+  std::shared_ptr<TestPersistParameter> test_client;
 
+  int ret_code = 0;
   // In case of an exception is thrown when performing an operation after `ctrl-c` occured.
   try {
-    auto test_client = std::make_shared<TestPersistParameter>("client", rclcpp::NodeOptions());
+    test_client = std::make_shared<TestPersistParameter>("client", rclcpp::NodeOptions());
     /*
     * First read parameter(include normal parameter and persistent parameter), to confirm the initial value of parameters.
     * Parameter server is launched with file `/tmp/parameter_server.yaml`, in this file, parameter `a_string` is defined 
@@ -166,7 +178,7 @@ int main(int argc, char ** argv)
     */
     {
       // If return fail, no need to do the following.
-      RCLCPP_INFO(get_logger("client"), "First read the initial value of parameter : ");
+      RCLCPP_INFO(test_client->get_logger(), "First read the initial value of parameter : ");
       test_client->do_read_and_check("a_string", "Hello world", "a. Read Normal Parameter");
       test_client->do_read_and_check("persistent.a_string", "Hello world", "b. Read Persistent Parameter");
     }
@@ -175,10 +187,10 @@ int main(int argc, char ** argv)
     * Test: Modifying the parameter `a_string`'s value to `Hello`, and add a new parameter `new_string` to YAML file. 
     */
     {
-      RCLCPP_INFO(get_logger("client"), "Change the value of parameter to `Hello` : ");
+      RCLCPP_INFO(test_client->get_logger(), "Change the value of parameter to `Hello` : ");
       test_client->do_change_and_check("a_string", "Hello", "c. Modify Existed Normal parameter");
       test_client->do_change_and_check("persistent.a_string", "Hello", "d. Modify Existed Persistent parameter");
-      RCLCPP_INFO(get_logger("client"), "Add a new parameter to parameter file : ");
+      RCLCPP_INFO(test_client->get_logger(), "Add a new parameter to parameter file : ");
       test_client->do_change_and_check("new_string", "Hello NewString", "e. Add New Normal parameter");
       test_client->do_change_and_check("persistent.new_string", "Hello NewString", "f. Add New Persistent parameter");
     }
@@ -191,26 +203,28 @@ int main(int argc, char ** argv)
     */
     {
       if(!test_client->wait_param_server_ready()) {
-        throw NoServerException();
+        throw NoServerError();
       }
-      RCLCPP_INFO(get_logger("client"), "Last read the value of parameter after server restarts," 
+      RCLCPP_INFO(test_client->get_logger(), "Last read the value of parameter after server restarts," 
         "to check whether changes stores to the file : ");
       test_client->do_read_and_check("a_string", "Hello world", "g. Test Normal Parameter Not Stores To File");
       test_client->do_read_and_check("persistent.a_string", "Hello", "h. Test Persistent Parameter Stores To File");
-	  test_client->do_read_and_check("new_string", nullptr, "i. Test New Added Normal Parameter Not Stores To File");
+      test_client->do_read_and_check("new_string", nullptr, "i. Test New Added Normal Parameter Not Stores To File");
       test_client->do_read_and_check("persistent.new_string", "Hello NewString", "j. Test New Added Persistent Parameter Stores To File");
     }
-
-    test_client->get_result();
   }catch(const rclcpp::exceptions::RCLError & e) {
-    RCLCPP_ERROR(get_logger("rcl"), "unexpectedly failed: %s", e.what());
-  }catch(const NoServerException & e) {
-    RCLCPP_ERROR(get_logger("client"), "unexpectedly failed: %s", e.what());
-  }catch(const SetErrorException & e) {
-    RCLCPP_ERROR(get_logger("client"), "unexpectedly failed: %s", e.what());
+    ret_code = -1;
+    RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
+  }catch(const NoServerError & e) {
+    ret_code = -2;
+    RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
+  }catch(const SetOperationError & e) {
+    ret_code = -3;
+    RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
   }
 
+  test_client->print_result();
   rclcpp::shutdown();
 
-  return 0;
+  return ret_code;
 }

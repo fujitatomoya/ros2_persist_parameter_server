@@ -228,7 +228,7 @@ The build steps are similar to the above build step, except that you need to ins
 start.py is the entry for test.
 start.py will call test.launch.py file to start persistent parameter server and the test client, it also creates a thread to kill parameter server after specified time. All function tests are finished in client.
 
-!!NOTE After the test is completed, you need to press `ctrl-c` to stop process manually.
+!!!NOTE After the test is completed, you need to press `ctrl-c` to stop process manually.
 
 ```
 # cd <colcon_workspace>/src/ros2_persist_parameter/client_demo
@@ -242,18 +242,18 @@ The phenomenon as below
 ```
 ......   // omit some output logs
 
-[ros2-2] [INFO] [1601285807.447139964] [client]: ***************************************************************************
-[ros2-2] [INFO] [1601285807.447167553] [client]: *********************************Test Result*******************************
-[ros2-2] [INFO] [1601285807.447188102] [client]: a. Read Normal Parameter : 		PASS
-[ros2-2] [INFO] [1601285807.447209567] [client]: b. Read Persistent Parameter : 		PASS
-[ros2-2] [INFO] [1601285807.447229844] [client]: c. Modify Existed Normal parameter : 		PASS
-[ros2-2] [INFO] [1601285807.447249582] [client]: d. Modify Existed Persistent parameter : 		PASS
-[ros2-2] [INFO] [1601285807.447267690] [client]: e. Add New Normal parameter : 		PASS
-[ros2-2] [INFO] [1601285807.447286431] [client]: f. Add New Persistent parameter : 		PASS
-[ros2-2] [INFO] [1601285807.447305231] [client]: g. Test Normal Parameter Not Stores To File : 		PASS
-[ros2-2] [INFO] [1601285807.447324266] [client]: h. Test Persistent Parameter Stores To File : 		PASS
-[ros2-2] [INFO] [1601285807.447355537] [client]: i. Test New Added Normal Parameter Not Stores To File : 		PASS
-[ros2-2] [INFO] [1601285807.447375761] [client]: j. Test New Added Persistent Parameter Stores To File : 		PASS
+[ros2-2] [INFO] [1601447662.145760479] [client]: ***************************************************************************
+[ros2-2] [INFO] [1601447662.145794365] [client]: *********************************Test Result*******************************
+[ros2-2] [INFO] [1601447662.145817265] [client]: a. Read Normal Parameter                                     :             PASS
+[ros2-2] [INFO] [1601447662.145842530] [client]: b. Read Persistent Parameter                                 :             PASS
+[ros2-2] [INFO] [1601447662.145863430] [client]: c. Modify Existed Normal parameter                           :             PASS
+[ros2-2] [INFO] [1601447662.145885082] [client]: d. Modify Existed Persistent parameter                       :             PASS
+[ros2-2] [INFO] [1601447662.145906067] [client]: e. Add New Normal parameter                                  :             PASS
+[ros2-2] [INFO] [1601447662.145926790] [client]: f. Add New Persistent parameter                              :             PASS
+[ros2-2] [INFO] [1601447662.145948146] [client]: g. Test Normal Parameter Not Stores To File                  :             PASS
+[ros2-2] [INFO] [1601447662.145969623] [client]: h. Test Persistent Parameter Stores To File                  :             PASS
+[ros2-2] [INFO] [1601447662.145990707] [client]: i. Test New Added Normal Parameter Not Stores To File        :             PASS
+[ros2-2] [INFO] [1601447662.146011312] [client]: j. Test New Added Persistent Parameter Stores To File        :             PASS
 ```
 
 # Authors

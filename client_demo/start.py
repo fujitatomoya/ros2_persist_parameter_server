@@ -19,9 +19,11 @@ def restart_server():
         program_name = 'server'
         for process in psutil.process_iter():
             if process.name() == program_name:
-                os.kill(int(process.pid), signal.SIGINT)
-                print("parameter server restart successfully")
-                break
+                path = psutil.Process(process.pid)
+                if "install/parameter_server/lib/parameter_server" in path.exe():
+                    os.kill(int(process.pid), signal.SIGINT)
+                    print("parameter server restart successfully")
+                    break
     except:
         print("parameter server restart failed")
         return
