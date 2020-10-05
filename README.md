@@ -105,8 +105,7 @@ all of the configuration options will be passed via arguments as followings.
 ### Dependent Packages
 
 ```
-apt install libyaml-cpp-dev
-apt install libboost-program-options1.65-dev libboost-filesystem1.65-dev
+apt install libyaml-cpp-dev libboost-program-options-dev libboost-filesystem-dev
 ```
 
 ### Prerequisites
@@ -123,8 +122,7 @@ to install local colcon workspace,
 # cd <colcon_workspace>/src
 # git clone https://github.com/fujitatomoya/ros2_persist_parameter_server
 # cd <colcon_workspace>
-# colcon list
-# colcon build
+# colcon build --symlink-install
 # source install/local_setup.bash
 ```
 
