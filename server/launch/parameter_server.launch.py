@@ -25,15 +25,18 @@ parameters_file_name = 'parameters_via_launch.yaml'
 def generate_launch_description():
     parameters_file_path = str(pathlib.Path(__file__).parents[1]) # get current path and go one level up
     parameters_file_path += '/param/' + parameters_file_name
-    print(parameters_file_path)
     return LaunchDescription([
         launch_ros.actions.Node(
-            package='parameter_server', node_executable='server', output='screen',
+            package='parameter_server', executable='server', output='screen',
+            # respawn in 5.0 seconds
+            respawn = True, respawn_delay = 5.0,
+
             # these parameters in parameters_file_path cannot be registered as persistent parameters,
             # these will be loaded as normal parameter without event on /parameter_events topic.
             parameters=[parameters_file_path],
+
             # this example to load persistent parameter files into parameter server,
             # these parameters descibed in parameter_server.yaml with prefix "persistent" will be registered as persistent parameter.
-            # arguments=['--file-path', '/tmp/parameter_server.yaml']
+            #arguments=['--file-path', '/tmp/parameter_server.yaml']
         )
     ])
