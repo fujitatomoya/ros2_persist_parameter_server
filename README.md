@@ -131,9 +131,9 @@ apt install libyaml-cpp-dev libboost-program-options-dev libboost-filesystem-dev
 
 ## Prerequisites
 
-currently verified only Ubuntu18.04.
+currently verified only Ubuntu20.04 with ros:foxy release.
 
-ros2 source build environment([Linux-Development-Setup/](https://index.ros.org/doc/ros2/Installation/Dashing/Linux-Development-Setup/)) is required to build and run the parameter server.
+ros2 source build environment([Linux-Development-Setup/](https://index.ros.org/doc/ros2/Installation/Foxy/Linux-Development-Setup/)) is required to build and run the parameter server.
 
 ## Build
 
@@ -203,8 +203,9 @@ These samples verify the following functions.
  - non-persistent parameter cannot be read/stored to/from the file system.
  - non-persistent parameter can be read/modified from parameter client
 
-## Build
-The build steps are similar to the above build step, except that you need to install ros2 launch package with `respawn` feature support, which is only support in master branch now.
+## Build (Deprecated)
+
+This procedure only requires if you are using ros:eloquent or ealier. if that is the case, you need to install ros2 launch package with `respawn` feature support, which is only support in master branch now.
 
 ```
 # cd <launch_workspace>/src
@@ -212,9 +213,7 @@ The build steps are similar to the above build step, except that you need to ins
 # cd <launch_workspace> && colcon build
 ```
 
-Then follow the [steps](##Build) described in the above.
-
-At last, make sure to add the path of `launch` package to the PATH environment.
+make sure to add the path of `launch` package to the PATH environment.
 ```
 # source <launch_workspace>/install/setup.bash
 ```
