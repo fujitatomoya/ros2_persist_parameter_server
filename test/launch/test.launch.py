@@ -29,6 +29,6 @@ def generate_launch_description():
             respawn=True
         ),
         launch.actions.ExecuteProcess(
-            cmd = ['ros2', 'run', 'test', 'client']
+            cmd = ['ros2', 'run', 'ros2_persistent_parameter_server_test', 'client']
         )
     ])

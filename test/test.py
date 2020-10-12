@@ -10,7 +10,7 @@ import psutil
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 sleep_time = 3
-launchCmd = 'ros2 launch test test.launch.py'
+launchCmd = 'ros2 launch ros2_persistent_parameter_server_test test.launch.py'
 
 def kill_server():
     try:
