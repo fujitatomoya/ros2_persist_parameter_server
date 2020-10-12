@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>client_demo</name>
+  <name>ros2_persistent_parameter_server_test</name>
   <version>1.0.0</version>
-  <description>Client demo for persistent parameter server</description>
+  <description>Client test demo for persistent parameter server</description>
   <maintainer email="Bingtao.Du@sony.com">dbt</maintainer>
   <license>Apache License 2.0</license>
 

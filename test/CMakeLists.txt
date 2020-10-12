@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(client_demo)
+project(ros2_persistent_parameter_server_test)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
@@ -19,7 +19,7 @@ find_package(rmw REQUIRED)
 include_directories(include)
 
 add_executable(client
-  src/main.cpp
+  src/test.cpp
   src/persist_parameter_client.cpp
 )
 

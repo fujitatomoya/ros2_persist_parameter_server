@@ -21,13 +21,13 @@
  * NoServerError
  *
  * The client will wait 5 seconds for the server to be ready.
- * If not, then throw an exception to terminate the endless waiting.
+ * If timeout, then throw an exception to terminate the endless waiting.
  */
 struct NoServerError : public std::runtime_error
 {
   public:
     NoServerError()
-      : std::runtime_error("Not find server"){}
+      : std::runtime_error("cannot connect to server"){}
 };
 
 /* 
@@ -40,7 +40,7 @@ struct SetOperationError : public std::runtime_error
 {
   public:
     SetOperationError()
-      : std::runtime_error("Set operation failed"){}
+      : std::runtime_error("set operation failed"){}
 };
 
 class TestPersistParameter
@@ -212,13 +212,13 @@ int main(int argc, char ** argv)
       test_client->do_read_and_check("new_string", nullptr, "i. Test New Added Normal Parameter Not Stores To File");
       test_client->do_read_and_check("persistent.new_string", "Hello NewString", "j. Test New Added Persistent Parameter Stores To File");
     }
-  }catch(const rclcpp::exceptions::RCLError & e) {
+  } catch (const rclcpp::exceptions::RCLError & e) {
     ret_code = -1;
     RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
-  }catch(const NoServerError & e) {
+  } catch (const NoServerError & e) {
     ret_code = -2;
     RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
-  }catch(const SetOperationError & e) {
+  } catch (const SetOperationError & e) {
     ret_code = -3;
     RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
   }

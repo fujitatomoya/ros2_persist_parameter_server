@@ -14,7 +14,7 @@
     - [Prerequisites](#prerequisites)
     - [Build](#build)
     - [Run](#run)
-- [Use Client Demo](#use-client-demo)
+- [Test](#test)
     - [Build](#build-1)
     - [Run](#run-1)
 - [Authors](#authors)
@@ -196,16 +196,14 @@ Integer value is: 81
 String value is: 81,82,83,84
 ```
 
-# Use Client Demo
+# Test
 
-The client demo verifies the following functions
+These samples verify the following functions.
 
  - persistent parameter can be read/stored to/from the file system.
  - persistent parameter can be read/modified from parameter client.
  - non-persistent parameter cannot be read/stored to/from the file system.
  - non-persistent parameter can be read/modified from parameter client
-
-!!!NOTE The client demo provided does not support the use of the specified parameter name, it only demonstrates and verifies the basic functions of the parameter server.
 
 ## Build
 The build steps are similar to the above build step, except that you need to install ros2 launch package with `respawn` feature support, which is only support in master branch now.
@@ -214,28 +212,31 @@ The build steps are similar to the above build step, except that you need to ins
 # cd <launch_workspace>/src
 # git clone https://github.com/ros2/launch.git
 # cd <launch_workspace> && colcon build
-# cd <colcon_workspace>/src
-# git clone https://github.com/fujitatomoya/ros2_persist_parameter_server
-# cd <colcon_workspace>
-# source <path-to-ros2_distro>/install/setup.bash   # ros2 eloquent or ros2 foxy was supported.
-# colcon build
-# source install/local_setup.bash
+```
+
+Then follow the [steps](##Build) described in the above.
+
+At last, make sure to add the path of `launch` package to the PATH environment.
+```
 # source <launch_workspace>/install/setup.bash
 ```
 
 ## Run
 
-start.py is the entry for test.
-start.py will call test.launch.py file to start persistent parameter server and the test client, it also creates a thread to kill parameter server after specified time. All function tests are finished in client.
+[test.py](./test/test.py) is the entry for test.
 
-!!!NOTE After the test is completed, you need to press `ctrl-c` to stop process manually.
+[test.py](./test/test.py) will call [test.launch.py](./test/launch/test.launch.py) file to start persistent parameter server and the test client, it also creates a thread to kill parameter server after specified time. All function tests are finished in client.
+
+!!!NOTE The test script will load the yaml file that should existed in `/tmp/test`, therefore, before executing test demo, you need to copy the yaml file existing in `server` directory to `/tmp/test`.
 
 ```
-# cd <colcon_workspace>/src/ros2_persist_parameter/client_demo
-# ./start.py
+# mkdir -p /tmp/test
+# cp <colcon_workspace>/src/ros2_persist_parameter/server/param/parameter_server.yaml /tmp/test
+# cd <colcon_workspace>/src/ros2_persist_parameter/test
+# ./test.py
 ```
 
-The phenomenon as below
+All of the test is listed with result as following
 
 !!!NOTE Client has a 5-seconds sleep during server restarts.
 

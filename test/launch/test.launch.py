@@ -25,10 +25,10 @@ import pathlib
 def generate_launch_description():
     return LaunchDescription([
         launch.actions.ExecuteProcess(
-            cmd = ['ros2', 'run', 'parameter_server', 'server', '--file-path', '/tmp/parameter_server.yaml'],
+            cmd = ['ros2', 'run', 'parameter_server', 'server', '--file-path', '/tmp/test/parameter_server.yaml'],
             respawn=True
         ),
         launch.actions.ExecuteProcess(
-            cmd = ['ros2', 'run', 'client_demo', 'client']
+            cmd = ['ros2', 'run', 'test', 'client']
         )
     ])
