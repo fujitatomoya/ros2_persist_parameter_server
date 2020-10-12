@@ -6,11 +6,16 @@ import time
 import os 
 import sys
 import signal 
+import shutil
 import psutil
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 sleep_time = 3
 launchCmd = 'ros2 launch ros2_persistent_parameter_server_test test.launch.py'
+
+if shutil.which('ros2') is None:
+    print("source <colcon_ws>/install/setup.bash...then retry.")
+    sys.exit(1)
 
 def kill_server():
     try:
