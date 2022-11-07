@@ -107,7 +107,7 @@ bool PersistParametersClient::read_parameter(const std::string & param_name, std
         }
         default: {
           ret = false;
-          RCLCPP_INFO(this->get_logger(), "parameter %s unsupported type %s", param_name.c_str(), param.get_type());
+          RCLCPP_INFO(this->get_logger(), "parameter %s unsupported type %d", param_name.c_str(), param.get_type());
           break;
       }
     }
