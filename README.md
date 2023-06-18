@@ -10,6 +10,7 @@
     - [Configurable Options](#configurable-options)
   - [Sequence](#sequence)
   - [Getting Started](#getting-started)
+    - [Supported Distribution](#supported-distribution)
     - [Dependent Packages](#dependent-packages)
     - [Prerequisites](#prerequisites)
     - [Build](#build)
@@ -122,6 +123,12 @@ all of the configuration options will be passed via arguments as followings.
 
 ## Getting Started
 
+### Supported Distribution
+
+- [ROS 2 Rolling Ridley](https://docs.ros.org/en/rolling/index.html)
+- [ROS 2 Iron Irwini](https://docs.ros.org/en/iron/index.html)
+- [ROS 2 Humble Hawksbill](https://docs.ros.org/en/humble/index.html)
+
 ### Dependent Packages
 
 ```bash
@@ -130,9 +137,7 @@ apt install libyaml-cpp-dev libboost-program-options-dev libboost-filesystem-dev
 
 ### Prerequisites
 
-currently verified only Ubuntu20.04 with ros:foxy release.
-
-ros2 source build environment([Linux-Development-Setup/](https://index.ros.org/doc/ros2/Installation/Foxy/Linux-Development-Setup/)) is required to build and run the parameter server.
+ros2 source build environment([Linux-Development-Setup/](https://index.ros.org/doc/ros2/Installation/Rolling/Linux-Development-Setup/)) is required to build and run the parameter server.
 
 ### Build
 
