@@ -2,31 +2,30 @@
 <!-- TOC -->
 
 - [ROS2 Persistent Parameter Server](#ros2-persistent-parameter-server)
-- [Background](#background)
-- [Overview](#overview)
+  - [Background](#background)
+  - [Overview](#overview)
     - [Persistent Parameter Registration](#persistent-parameter-registration)
-        - [Persistent Prefix](#persistent-prefix)
-        - [Scope Overview](#scope-overview)
+      - [Persistent Prefix](#persistent-prefix)
+      - [Scope Overview](#scope-overview)
     - [Configurable Options](#configurable-options)
-    - [Sequence](#sequence)
-- [Getting Started](#getting-started)
+  - [Sequence](#sequence)
+  - [Getting Started](#getting-started)
     - [Dependent Packages](#dependent-packages)
     - [Prerequisites](#prerequisites)
     - [Build](#build)
     - [Run](#run)
-- [Test](#test)
-    - [Build](#build-1)
+  - [Test](#test)
+    - [Build (Deprecated)](#build-deprecated)
     - [Run](#run-1)
-- [Authors](#authors)
-- [License](#license)
+  - [Authors](#authors)
+  - [License](#license)
 
 <!-- /TOC -->
 This is the PoC project for ROS2 Persistent Parameter Server, that resides in the ROS2 system to serve the parameter daemon. The other nodes(e.g the client demo provided in the code) can write/read the parameter in Parameter Server, and ***Parameter Server is able to store the parameter into the persistent storage which user can specify such as tmpfs, nfs, or disk.***
 
+## Background
 
-# Background
-
-The disussion is opened [here](https://discourse.ros.org/t/ros2-global-parameter-server-status/10114/13), and centralized parameter server is not a good affinity to ROS2 distributed system architecture. One of the most valuable things about ROS APIs is that we make sure that the messages have specific semantic meaning so that they can’t be misinterpreted. As we develop the ROS 2 tools and best practices we should make sure to bring that same level of rigor to parameters too for greater reusability and correctness.
+The discussion is opened [here](https://discourse.ros.org/t/ros2-global-parameter-server-status/10114/13), and centralized parameter server is not a good affinity to ROS2 distributed system architecture. One of the most valuable things about ROS APIs is that we make sure that the messages have specific semantic meaning so that they can’t be misinterpreted. As we develop the ROS 2 tools and best practices we should make sure to bring that same level of rigor to parameters too for greater reusability and correctness.
 
 Although, it is expected to be the following requirement.
 
@@ -35,7 +34,7 @@ Although, it is expected to be the following requirement.
 - Persistent storage support to re-initialize the system. parameters are modified in runtime and cache it into persistent volume as well. and next boot or next re-spawn, modified parameter will be loaded at initialization. (parameter lifetime is dependent on use case, sometimes system lifetime, sometimes node lifetime.)
 - Using ROS1 based application with Parameter Server.
 
-# Overview
+## Overview
 
 ![overview_architecture](./images/overview_architecture.png)
 
@@ -43,13 +42,13 @@ Generally ROS2 Parameter Server is simple blackboard to write/read parameters on
 
 ROS2 Parameter Server is constructed on ROS parameter API's, nothing specific API's are provided to connect to the server from the client. Also, about the security it just relies on ROS2 security aspect.
 
-## Persistent Parameter Registration
+### Persistent Parameter Registration
 
-### Persistent Prefix
+#### Persistent Prefix
 
 persistent parameter must have prefix ***"persistent"***
 
-### Scope Overview
+#### Scope Overview
 
 parameter server has the following scope for persistent parameter. since parameter server is built on top of ROS2 Parameter API, parameter server supports "persistent" parameter based on **/parameter_events** topic.
 
@@ -61,7 +60,7 @@ parameter server has the following scope for persistent parameter. since paramet
 |  Parameter File Arguments  |  NO  |  e.g) --ros-args --params-file ./parameters_via_cli.yaml<br>same with parameter arguments, cannot be registed as persistent parameter, since these cannot be notified via **/parameter_events**  to parameter server. |
 |  Launch Parameter  |  NO  |  e.g) ros2 launch parameter_server parameter_server.launch.py<br>same with parameter arguments, cannot be registed as persistent parameter, since these cannot be notified via **/parameter_events**  to parameter server.  |
 
-## Configurable Options
+### Configurable Options
 
 - Node Name
   Since ROS2 parameter is owned by node, node name will be needed to access the parameters, this is designed to clearify semantics for the parameters and owners. Node name will be "parameter_server" if node name is not specifies. so the other nodes can use "parameter_server" as well to access in the same system Parameter Server. If there must exist multiple parameter servers, these parameter servers need to specify a different node name, such as "parameter_server_[special_string]", please notice that ROS2 node name can only contains alphanumerics and '_'.
@@ -117,29 +116,29 @@ all of the configuration options will be passed via arguments as followings.
 2. parameter server loads parameter specified yaml file via --file-path.
    and then parameter server will overwrite or declare parameters.
    (*) at #1 parameters might be overwritten.
-3.  parameter server starts the main loop with callback for parameter changes.
-4.  if the parameter changes are on "/persistent" that will be stored in storage at this time.
-5.  at the finilization, flash all of the "/persistent" parameters into the file system.
+3. parameter server starts the main loop with callback for parameter changes.
+4. if the parameter changes are on "/persistent" that will be stored in storage at this time.
+5. at the finalization, flash all of the "/persistent" parameters into the file system.
 
-# Getting Started
+## Getting Started
 
-## Dependent Packages
+### Dependent Packages
 
-```
+```bash
 apt install libyaml-cpp-dev libboost-program-options-dev libboost-filesystem-dev
 ```
 
-## Prerequisites
+### Prerequisites
 
 currently verified only Ubuntu20.04 with ros:foxy release.
 
 ros2 source build environment([Linux-Development-Setup/](https://index.ros.org/doc/ros2/Installation/Foxy/Linux-Development-Setup/)) is required to build and run the parameter server.
 
-## Build
+### Build
 
 to install local colcon workspace,
 
-```
+```bash
 # cd <colcon_workspace>/src
 # git clone https://github.com/fujitatomoya/ros2_persist_parameter_server
 # cd <colcon_workspace>
@@ -147,78 +146,77 @@ to install local colcon workspace,
 # source install/local_setup.bash
 ```
 
-## Run
+### Run
 
 1. start parameter server.
 
-```
-# cp <colcon_workspace>/src/ros2_persist_parameter_server/server/param/parameter_server.yaml /tmp/
-
-# ros2 run parameter_server server
-[INFO] [parameter_server]: Parameter Server node named: '/parameter_server' started and ready, and serving '9' parameters already!
-...<snip>
-
-```
+   ```bash
+   # cp <colcon_workspace>/src/ros2_persist_parameter_server/server/param/parameter_server.yaml /tmp/
+   # ros2 run parameter_server server
+   [INFO] [parameter_server]: Parameter Server node named: '/parameter_server' started and ready, and serving '9' parameters already!
+   ...<snip>
+   ```
 
 2. update persistent parameter.
 
-```
-# ros2 param set /parameter_server persistent.some_int 81
-Set parameter successful
-# ros2 param set /parameter_server persistent.a_string Konnichiwa
-Set parameter successful
-# ros2 param set /parameter_server persistent.pi 3.14159265359
-Set parameter successful
-# ros2 param set /parameter_server persistent.some_lists.some_integers 81,82,83,84
-Set parameter successful
-```
+   ```bash
+   # ros2 param set /parameter_server persistent.some_int 81
+   Set parameter successful
+   # ros2 param set /parameter_server persistent.a_string Konnichiwa
+   Set parameter successful
+   # ros2 param set /parameter_server persistent.pi 3.14159265359
+   Set parameter successful
+   # ros2 param set /parameter_server persistent.some_lists.some_integers 81,82,83,84
+   Set parameter successful
+   ```
 
 3. restart parameter server.
 
-```
-# ros2 run parameter_server server
-[INFO] [parameter_server]: Parameter Server node named: '/parameter_server' started and ready, and serving '9' parameters already!
-...<snip>
-```
+   ```bash
+   # ros2 run parameter_server server
+   [INFO] [parameter_server]: Parameter Server node named: '/parameter_server' started and ready, and serving '9' parameters already!
+   ...<snip>
+   ```
 
 4. check persistent parameter is precisely cached and loaded into parameter server.
 
-```
-# ros2 param get /parameter_server persistent.a_string
-String value is: Konnichiwa
-# ros2 param get /parameter_server persistent.pi
-Double value is: 3.14159265359
-# ros2 param get /parameter_server persistent.some_int
-Integer value is: 81
-# ros2 param get /parameter_server persistent.some_lists.some_integers
-String value is: 81,82,83,84
-```
+   ```bash
+   # ros2 param get /parameter_server persistent.a_string
+   String value is: Konnichiwa
+   # ros2 param get /parameter_server persistent.pi
+   Double value is: 3.14159265359
+   # ros2 param get /parameter_server persistent.some_int
+   Integer value is: 81
+   # ros2 param get /parameter_server persistent.some_lists.some_integers
+   String value is: 81,82,83,84
+   ```
 
-# Test
+## Test
 
 These samples verify the following functions.
 
- - persistent parameter can be read/stored to/from the file system.
- - persistent parameter can be read/modified from parameter client.
- - non-persistent parameter cannot be read/stored to/from the file system.
- - non-persistent parameter can be read/modified from parameter client
+- persistent parameter can be read/stored to/from the file system.
+- persistent parameter can be read/modified from parameter client.
+- non-persistent parameter cannot be read/stored to/from the file system.
+- non-persistent parameter can be read/modified from parameter client
 
-## Build (Deprecated)
+### Build (Deprecated)
 
 This procedure only requires if you are using ros:eloquent or ealier. if that is the case, you need to install ros2 launch package with `respawn` feature support, which is only support in master branch now.
 
-```
+```bash
 # cd <launch_workspace>/src
 # git clone https://github.com/ros2/launch.git
 # cd <launch_workspace> && colcon build
 ```
 
 make sure to add the path of `launch` package to the PATH environment.
-```
+
+```bash
 # source <launch_workspace>/install/setup.bash
 ```
 
-## Run
+### Run
 
 [test.py](./test/test.py) is the entry for test.
 
@@ -226,7 +224,7 @@ make sure to add the path of `launch` package to the PATH environment.
 
 !!!NOTE The test script will load the yaml file that should existed in `/tmp/test`, therefore, before executing test demo, you need to copy the yaml file existing in `server` directory to `/tmp/test`.
 
-```
+```bash
 # mkdir -p /tmp/test
 # cp <colcon_workspace>/src/ros2_persist_parameter/server/param/parameter_server.yaml /tmp/test
 # cd <colcon_workspace>/src/ros2_persist_parameter/test
@@ -237,7 +235,7 @@ All of the test is listed with result as following
 
 !!!NOTE Client has a 5-seconds sleep during server restarts.
 
-```
+```bash
 ......   // omit some output logs
 
 [ros2-2] [INFO] [1601447662.145760479] [client]: ***************************************************************************
@@ -254,10 +252,10 @@ All of the test is listed with result as following
 [ros2-2] [INFO] [1601447662.146011312] [client]: j. Test New Added Persistent Parameter Stores To File        :             PASS
 ```
 
-# Authors
+## Authors
 
-* **Tomoya Fujita** --- Tomoya.Fujita@sony.com
+- **Tomoya Fujita** --- Tomoya.Fujita@sony.com
 
-# License
+## License
 
 Apache 2.0
