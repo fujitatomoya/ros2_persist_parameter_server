@@ -1,5 +1,5 @@
-# This is workflow to build parameter server in ros docker images
-name: build
+# This is workflow for parameter server with humble
+name: humble
 
 on:
   push:
@@ -17,35 +17,7 @@ jobs:
   # each job description absorb the distribution dependency as much as possible,
   # so that build verification script can be agnostic from distribution dependency.
 
-  rolling-build:
-    runs-on: ubuntu-latest
-    container:
-      image: ros:rolling
-      env:
-        ROS_DISTRO: rolling
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v3
-      - name: Build with ROS rolling
-        shell: bash
-        run: |
-          ./scripts/build-verification.sh
-
-  iron-build:
-    runs-on: ubuntu-latest
-    container:
-      image: ros:iron
-      env:
-        ROS_DISTRO: iron
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v3
-      - name: Build with ROS iron
-        shell: bash
-        run: |
-          ./scripts/build-verification.sh
-
-  humble-build:
+  build:
     runs-on: ubuntu-latest
     container:
       image: ros:humble
