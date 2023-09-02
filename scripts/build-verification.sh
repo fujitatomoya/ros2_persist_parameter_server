@@ -1,0 +1,73 @@
+#!/bin/bash
+
+#####################################################################
+# ROS 2 Persistent Parameter Server
+#
+# This script builds parameter server within ros docker images.
+#
+# To avoid updating and modifying the files under `.github/workflows`,
+# this scripts should be adjusted building process accordingly.
+# And `.github/workflows` just calls this script in the workflow pipeline.
+# This allows us to maintain the workflow process easier for contributers.
+#
+#####################################################################
+
+########################
+# Function Definitions #
+########################
+
+function mark {
+    export $1=`pwd`;
+}
+
+function exit_trap() {
+    if [ $? != 0 ]; then
+        echo "Command [$BASH_COMMAND] is failed"
+        exit 1
+    fi
+}
+
+function install_prerequisites () {
+    trap exit_trap ERR
+    echo "[${FUNCNAME[0]}]: update and install dependent packages."
+    apt update && apt upgrade -y
+    apt install -y ros-${ROS_DISTRO}-desktop ros-${ROS_DISTRO}-rmw-cyclonedds-cpp --no-install-recommends
+    cd $there
+}
+
+function setup_build_colcon_env () {
+    trap exit_trap ERR
+    echo "[${FUNCNAME[0]}]: set up colcon build environement."
+    mkdir -p ${COLCON_WORKSPACE}/src
+    cd ${COLCON_WORKSPACE}
+    cp -rf $there ${COLCON_WORKSPACE}/src
+}
+
+function build_parameter_server () {
+    trap exit_trap ERR
+    echo "[${FUNCNAME[0]}]: build ROS 2 parameter server."
+    source /opt/ros/${ROS_DISTRO}/setup.bash
+    cd ${COLCON_WORKSPACE}
+    # TODO: test project should be integrated with `colcon test`.
+    colcon build --symlink-install --packages-select parameter_server ros2_persistent_parameter_server_test
+}
+
+########
+# Main #
+########
+
+export DEBIAN_FRONTEND=noninteractive
+export COLCON_WORKSPACE=/tmp/colcon_ws
+
+# mark the working space root directory, so that we can come back anytime with `cd $there`
+mark there
+
+# set the trap on error
+trap exit_trap ERR
+
+# call install functions in sequence
+install_prerequisites
+setup_build_colcon_env
+build_parameter_server
+
+exit 0
