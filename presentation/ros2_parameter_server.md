@@ -13,7 +13,6 @@ footer: "[fujitatomoya@github](https://github.com/fujitatomoya)"
 - can set/get any parameters in this global server.
 - can save/load the parameters in storage.
 
-
 <!---
 Comment Here
 --->
