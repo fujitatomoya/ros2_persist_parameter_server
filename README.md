@@ -20,6 +20,7 @@
   - [Test](#test)
     - [Build (Deprecated)](#build-deprecated)
     - [Run](#run-1)
+  - [Known Issues](#known-issues)
   - [Authors](#authors)
   - [License](#license)
 
@@ -258,6 +259,12 @@ All of the test is listed with result as following
 [ros2-2] [INFO] [1601447662.145990707] [client]: i. Test New Added Normal Parameter Not Stores To File        :             PASS
 [ros2-2] [INFO] [1601447662.146011312] [client]: j. Test New Added Persistent Parameter Stores To File        :             PASS
 ```
+
+## Known Issues
+
+- [Error when loading a persistent parameter of type array<double>](https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/13)
+  - `[1.0,1.1]` is deduced as `[1, 1.1000000000000001]` because of [yaml-cpp bug](https://github.com/jbeder/yaml-cpp/issues/1016), this will leads to `Failed to parse parameters` exception when loading the persistent parameters from yaml file.
+  - The work-around is to use string sequence `["1.0", "1.1"]` instead of double type, then change it into `float()` in the program.
 
 ## Authors
 
