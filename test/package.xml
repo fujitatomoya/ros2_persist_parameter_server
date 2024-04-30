@@ -2,25 +2,24 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>ros2_persistent_parameter_server_test</name>
-  <version>1.0.0</version>
-  <description>Client test demo for persistent parameter server</description>
-  <maintainer email="Bingtao.Du@sony.com">dbt</maintainer>
+  <version>1.0.1</version>
+  <description>
+   Client test demo for persistent parameter server
+  </description>
+  <maintainer email="Tomoya.Fujita@sony.com">dbt</maintainer>
   <license>Apache License 2.0</license>
+  <author email="Tomoya.Fujita@sony.com">Tomoya Fujita></author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <build_depend>rclcpp</build_depend>
-  <build_depend>rclcpp_components</build_depend>
-  <build_depend>rcutils</build_depend>
-  <build_depend>rmw</build_depend>
-  <build_depend>rmw_implementation_cmake</build_depend>
-  <build_depend>std_msgs</build_depend>
+
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>rcutils</depend>
+  <depend>rmw</depend>
+  <depend>rmw_implementation_cmake</depend>
+  <depend>std_msgs</depend>
 
   <exec_depend>launch_ros</exec_depend>
-  <exec_depend>rclcpp</exec_depend>
-  <exec_depend>rclcpp_components</exec_depend>
-  <exec_depend>rcutils</exec_depend>
-  <exec_depend>rmw</exec_depend>
-  <exec_depend>std_msgs</exec_depend>
 
   <test_depend>launch</test_depend>
   <test_depend>ament_lint_auto</test_depend>
