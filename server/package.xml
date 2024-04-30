@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>parameter_server</name>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <description>
     ros2 parameter server that other nodes can write/read parameters including persistent parameters.
   </description>
@@ -12,22 +12,15 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <build_depend>rclcpp</build_depend>
-  <build_depend>rclcpp_components</build_depend>
-  <build_depend>rcutils</build_depend>
-  <build_depend>rmw</build_depend>
-  <build_depend>rmw_implementation_cmake</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>yaml_cpp_vendor</build_depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>rcutils</depend>
+  <depend>rmw</depend>
+  <depend>rmw_implementation_cmake</depend>
+  <depend>std_msgs</depend>
+  <depend>yaml_cpp_vendor</depend>
 
   <exec_depend>launch_ros</exec_depend>
-  <exec_depend>rclcpp</exec_depend>  <exec_depend>yaml_cpp_vendor</exec_depend>
-
-  <exec_depend>rclcpp_components</exec_depend>
-  <exec_depend>rcutils</exec_depend>
-  <exec_depend>rmw</exec_depend>
-  <exec_depend>std_msgs</exec_depend>
-  <exec_depend>yaml_cpp_vendor</exec_depend>
 
   <test_depend>ament_cmake_pytest</test_depend>
   <test_depend>ament_lint_auto</test_depend>

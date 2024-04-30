@@ -32,6 +32,7 @@ function install_prerequisites () {
     echo "[${FUNCNAME[0]}]: update and install dependent packages."
     apt update && apt upgrade -y
     apt install -y ros-${ROS_DISTRO}-desktop ros-${ROS_DISTRO}-rmw-cyclonedds-cpp --no-install-recommends
+    apt install -y libyaml-cpp-dev libboost-program-options-dev libboost-filesystem-dev
     cd $there
 }
 
