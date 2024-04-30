@@ -31,19 +31,34 @@ find_package(rmw REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS program_options filesystem)
 find_package(yaml_cpp_vendor REQUIRED)
-find_package(yaml-cpp REQUIRED)
 
 add_executable(server
  src/parameter_server.cpp
  src/main.cpp
 )
 
-target_link_libraries(server
-  rclcpp::rclcpp
-  rcutils::rcutils
-  ${Boost_LIBRARIES}
-  yaml-cpp::yaml-cpp
-)
+# yaml-cpp updates CMake thing significantly on v0.8.0 or later.
+# so we ended up having the if statement to process differently instead of creating branches.
+# see https://github.com/jbeder/yaml-cpp/releases/tag/0.8.0
+find_package(yaml-cpp 0.8.0 QUIET)
+if (yaml-cpp_FOUND)
+  message(STATUS "yaml-cpp package is greater equal than version 0.8.0")
+  target_link_libraries(server
+    rclcpp::rclcpp
+    rcutils::rcutils
+    ${Boost_LIBRARIES}
+    yaml-cpp::yaml-cpp
+  )
+else()
+  message(STATUS "yaml-cpp package is less than version 0.8.0")
+  find_package(yaml-cpp REQUIRED)
+  target_link_libraries(server
+    rclcpp::rclcpp
+    rcutils::rcutils
+    ${Boost_LIBRARIES}
+    yaml-cpp
+  )
+endif()
 
 target_include_directories(server
   PUBLIC
