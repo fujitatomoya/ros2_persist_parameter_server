@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(parameter_server VERSION 1.0.0)
 
-# Default to C++14
+# Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -19,17 +19,17 @@ find_package(rmw REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS program_options filesystem)
 find_package(yaml_cpp_vendor REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 include_directories(include)
 include_directories(${Boost_INCLUDE_DIRS})
-include_directories(${yaml_cpp_vendor_INCLUDE_DIRS})
 
 add_executable(server
  src/parameter_server.cpp
  src/main.cpp
 )
 ament_target_dependencies(server rclcpp rclcpp_components std_msgs)
-target_link_libraries(server ${Boost_LIBRARIES} ${yaml_cpp_vendor_LIBRARIES})
+target_link_libraries(server ${Boost_LIBRARIES} yaml-cpp::yaml-cpp)
 
 install(TARGETS server DESTINATION lib/${PROJECT_NAME})
 
