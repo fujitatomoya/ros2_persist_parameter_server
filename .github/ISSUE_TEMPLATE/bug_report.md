@@ -11,9 +11,9 @@ assignees: ''
 **Required Information**
 
 - Operating System:
-  - <!-- OS and version (e.g. Ubuntu 22.04...) -->
+  - <!-- OS and version (e.g. Ubuntu 24.04...) -->
 - ROS distribution
-  - <!-- ROS 2 (e.g. Humble / Iron / Rolling...) -->
+  - <!-- ROS 2 (e.g. Humble / Iron / Jazzy / Rolling...) -->
 - RMW Implementation
   - <!-- RMW (e.g. rmw_fastrtps...) -->
 - ROS 2 Persistent Parameter Server Commit ID
