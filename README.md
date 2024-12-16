@@ -1,4 +1,4 @@
-[![humble](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/humble.yml/badge.svg)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/humble.yml) [![iron](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/iron.yml/badge.svg)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/iron.yml) [![jazzy](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/jazzy.yml/badge.svg)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/jazzy.yml) [![rolling](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/rolling.yml/badge.svg)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/rolling.yml)
+[![humble](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/humble.yml/badge.svg)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/humble.yml) [![jazzy](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/jazzy.yml/badge.svg)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/jazzy.yml) [![rolling](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/rolling.yml/badge.svg)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/rolling.yml)
 
 # ROS2 Persistent Parameter Server
 
@@ -133,7 +133,6 @@ all of the configuration options will be passed via arguments as followings.
 
 - [ROS 2 Rolling Ridley](https://docs.ros.org/en/rolling/index.html)
 - [ROS 2 Jazzy Jalisco](https://docs.ros.org/en/jazzy/index.html)
-- [ROS 2 Iron Irwini](https://docs.ros.org/en/iron/index.html)
 - [ROS 2 Humble Hawksbill](https://docs.ros.org/en/humble/index.html)
 
 ### Dependent Packages
