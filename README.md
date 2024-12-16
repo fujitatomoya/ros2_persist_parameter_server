@@ -4,7 +4,7 @@
 
 ROS 2 Persistent Parameter Server, that resides in the ROS 2 system to serve the parameter daemon. The other nodes(e.g the client demo provided in the code) can write/read the parameter in Parameter Server, and ***Parameter Server is able to store the parameter into the persistent storage which user can specify such as tmpfs, nfs, or disk.***
 
-See [overview slide deck](https://raw.githack.com/fujitatomoya/ros2_persist_parameter_server/rolling/doc/overview.html) for general information.
+See [overview slide deck](https://raw.githack.com/fujitatomoya/ros2_persist_parameter_server/rolling/presentation/ros2_parameter_server.html) for general information.
 
 <!-- TOC -->
 
