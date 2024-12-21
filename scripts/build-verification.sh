@@ -8,7 +8,7 @@
 # To avoid updating and modifying the files under `.github/workflows`,
 # this scripts should be adjusted building process accordingly.
 # And `.github/workflows` just calls this script in the workflow pipeline.
-# This allows us to maintain the workflow process easier for contributers.
+# This allows us to maintain the workflow process easier for contributors.
 #
 #####################################################################
 
