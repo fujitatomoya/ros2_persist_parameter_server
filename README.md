@@ -162,7 +162,7 @@ to install local colcon workspace,
 # cd <colcon_workspace>/src
 # git clone https://github.com/fujitatomoya/ros2_persist_parameter_server
 # cd <colcon_workspace>
-# colcon build --symlink-install
+# colcon build --symlink-install --packages-select parameter_server ros2_persistent_parameter_server_test
 # source install/local_setup.bash
 ```
 
@@ -237,8 +237,7 @@ make sure to add the path of `launch` package to the PATH environment.
 ```bash
 # mkdir -p /tmp/test
 # cp <colcon_workspace>/src/ros2_persist_parameter/server/param/parameter_server.yaml /tmp/test
-# cd <colcon_workspace>/src/ros2_persist_parameter/test
-# ./test.py
+# ./<colcon_workspace>/src/ros2_persist_parameter/test/test.py
 ```
 
 All of the test is listed with result as following

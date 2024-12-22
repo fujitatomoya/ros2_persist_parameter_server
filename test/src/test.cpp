@@ -118,17 +118,23 @@ class TestPersistParameter
     }
 
     // Get all test results.
-    inline void print_result() const
+    inline int  print_result() const
     {
+      int ret = EXIT_SUCCESS;
       RCLCPP_INFO(this->get_logger(), "****************************************************"
                                         "***********************");
       RCLCPP_INFO(this->get_logger(), "*********************************Test Result*********"
                                         "**********************");
       for(const auto & res : result_map_) {
         RCLCPP_INFO(this->get_logger(), "%-60s : %16s", res.first.c_str(), res.second?"PASS":"NOT PASS");
+
+        // if any tests are not passed, return EXIT_FAILURE.
+        if (res.second == false) {
+          ret = EXIT_FAILURE;
+        }
       }
 
-      return;
+      return ret;
     }
 
     static inline rclcpp::Logger get_logger()
@@ -223,7 +229,8 @@ int main(int argc, char ** argv)
     RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
   }
 
-  test_client->print_result();
+  // if any tests are not passed, return EXIT_FAILURE.
+  ret_code = test_client->print_result();
   rclcpp::shutdown();
 
   return ret_code;
