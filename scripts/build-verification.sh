@@ -63,7 +63,8 @@ function test_parameter_server () {
     # source the parameter server local packages
     source ./install/local_setup.bash
     # setup and execute the system test
-    cp ./src/ros2/ros2_persist_parameter_server/server/param/parameter_server.yaml /tmp/test
+    mkdir /tmp/test
+    cp ./src/ros2_persist_parameter_server/server/param/parameter_server.yaml /tmp/test
     ./src/ros2_persist_parameter_server/test/test.py
 }
 
