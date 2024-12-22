@@ -49,8 +49,23 @@ function build_parameter_server () {
     echo "[${FUNCNAME[0]}]: build ROS 2 parameter server."
     source /opt/ros/${ROS_DISTRO}/setup.bash
     cd ${COLCON_WORKSPACE}
-    # TODO: test project should be integrated with `colcon test`.
     colcon build --symlink-install --packages-select parameter_server ros2_persistent_parameter_server_test
+}
+
+function test_parameter_server () {
+    trap exit_trap ERR
+    echo "[${FUNCNAME[0]}]: test ROS 2 parameter server."
+    source /opt/ros/${ROS_DISTRO}/setup.bash
+    cd ${COLCON_WORKSPACE}
+
+    # TODO(@fujitatomoya): currently unit tests are missing for parameter server with `colcon test`.
+
+    # source the parameter server local packages
+    source ./install/local_setup.bash
+    # setup and execute the system test
+    mkdir /tmp/test
+    cp ./src/ros2_persist_parameter_server/server/param/parameter_server.yaml /tmp/test
+    ./src/ros2_persist_parameter_server/test/test.py
 }
 
 ########
@@ -70,5 +85,6 @@ trap exit_trap ERR
 install_prerequisites
 setup_build_colcon_env
 build_parameter_server
+test_parameter_server
 
 exit 0

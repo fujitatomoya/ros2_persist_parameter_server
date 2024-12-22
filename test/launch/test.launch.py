@@ -16,19 +16,12 @@
 
 from launch import LaunchDescription
 from launch.substitutions import EnvironmentVariable
-import launch_ros.actions
 import launch
-import os
-import sys 
-import pathlib
 
 def generate_launch_description():
     return LaunchDescription([
         launch.actions.ExecuteProcess(
             cmd = ['ros2', 'run', 'parameter_server', 'server', '--file-path', '/tmp/test/parameter_server.yaml'],
             respawn=True
-        ),
-        launch.actions.ExecuteProcess(
-            cmd = ['ros2', 'run', 'ros2_persistent_parameter_server_test', 'client']
         )
     ])
