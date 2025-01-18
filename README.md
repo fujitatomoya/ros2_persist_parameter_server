@@ -66,8 +66,8 @@ parameter server has the following scope for persistent parameter. since paramet
 |  Parameter API  |  YES  |  ROS 2 Parameter Client API supported, since this activity can be detected via **/parameter_events**.  |
 |  Persistent Parameter File  |  YES  | parameter server dedicated argument to specify the file to load as parameters. in addition, all of the persistent parameters will be stored into this file during shutdown.<br> e.g) --file-path /tmp/parameter_server.yaml |
 |  Parameter Arguments  |  NO  |  e.g) --ros-args -p persistent.some_int:=42<br>some_int cannot be registed as persistent parameter, since this cannot be notified via **/parameter_events** to parameter server.  |
-|  Parameter File Arguments  |  NO  |  e.g) --ros-args --params-file ./parameters_via_cli.yaml<br>same with parameter arguments, cannot be registed as persistent parameter, since these cannot be notified via **/parameter_events**  to parameter server. |
-|  Launch Parameter  |  NO  |  e.g) ros2 launch parameter_server parameter_server.launch.py<br>same with parameter arguments, cannot be registed as persistent parameter, since these cannot be notified via **/parameter_events**  to parameter server.  |
+|  Parameter File Arguments  |  NO  |  e.g) --ros-args --params-file ./parameters_via_cli.yaml<br>same with parameter arguments, cannot be registered as persistent parameter, since these cannot be notified via **/parameter_events**  to parameter server. |
+|  Launch Parameter  |  NO  |  e.g) ros2 launch parameter_server parameter_server.launch.py<br>same with parameter arguments, cannot be registered as persistent parameter, since these cannot be notified via **/parameter_events**  to parameter server.  |
 
 ### Configurable Options
 
@@ -109,7 +109,7 @@ all of the configuration options will be passed via arguments as followings.
         <tr>
             <td rowspan=2>Node Options</td>
             <td>--allow-declare true/false</td>
-            <td>default enabled, if specified allow any parameter name to be set on parameter server without declaration by itselt. Otherwise it does not.</td>
+            <td>default enabled, if specified allow any parameter name to be set on parameter server without declaration by itself. Otherwise it does not.</td>
         </tr>
         <tr>
             <td>--allow-override true/false</td>

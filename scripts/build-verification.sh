@@ -38,7 +38,7 @@ function install_prerequisites () {
 
 function setup_build_colcon_env () {
     trap exit_trap ERR
-    echo "[${FUNCNAME[0]}]: set up colcon build environement."
+    echo "[${FUNCNAME[0]}]: set up colcon build environment."
     mkdir -p ${COLCON_WORKSPACE}/src
     cd ${COLCON_WORKSPACE}
     cp -rf $there ${COLCON_WORKSPACE}/src

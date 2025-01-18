@@ -38,7 +38,7 @@ def kill_server():
     time.sleep(5)
     #print("Press CTRL-C to shutdown...")
 
-# Start Server process with respawn enabled, this process stays running
+# Start Server process with re-spawn enabled, this process stays running
 server_process = subprocess.Popen(launchServerCmd, preexec_fn=os.setsid)
 print(f"Parameter Server Process started with PID: {server_process.pid}")
 
@@ -46,7 +46,7 @@ print(f"Parameter Server Process started with PID: {server_process.pid}")
 client_process = subprocess.Popen(launchClientCmd)
 print(f"Parameter Client Process started with PID: {client_process.pid}")
 
-# Start killer thread to respawn the parameter server
+# Start killer thread to re-spawn the parameter server
 t = Thread(target = kill_server, args = ())
 t.start()
 
