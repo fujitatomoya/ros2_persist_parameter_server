@@ -213,10 +213,9 @@ void ParameterServer::LoadYamlFile()
         {
           // declare parameter
           RCLCPP_DEBUG(this->get_logger(), "declare %s %s", name.c_str(), to_string(value).c_str());
-          node_parameters->declare_parameter(
-            name,
-            value,
-            rcl_interfaces::msg::ParameterDescriptor());
+          rcl_interfaces::msg::ParameterDescriptor descriptor;
+          descriptor.dynamic_typing = true;
+          node_parameters->declare_parameter(name, value, descriptor);
 
           // 1. if automatically_declare_parameters_from_overrides is false,
           // parameter from __params: not declared but saved in overrides list,
