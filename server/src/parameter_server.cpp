@@ -14,6 +14,7 @@
 
 #include "parameter_server.h"
 
+#include <chrono>
 #include <fstream>
 #include <map>
 #include <boost/algorithm/string.hpp>
@@ -29,15 +30,28 @@
 #define PERSISTENT_DOT_KEY    "persistent."
 
 ParameterServer::ParameterServer(
-  const std::string& node_name,
+  const std::string & node_name,
   const rclcpp::NodeOptions & options,
-  const std::string& persistent_yaml_file)
-  : Node(node_name, options),
+  const std::string & persistent_yaml_file,
+  unsigned int storing_period)
+: Node(node_name, options),
   param_update_(false),
   persistent_yaml_file_(persistent_yaml_file),
   node_name_(get_name())
 {
   RCLCPP_DEBUG(this->get_logger(), "%s yaml:%s", __PRETTY_FUNCTION__, persistent_yaml_file_.c_str());
+
+  if (!storing_period) {
+    RCLCPP_INFO(
+      this->get_logger(), "Period is 0. Will not perform periodic persistent parameter storing");
+  } else {
+    timer_ = this->create_wall_timer(
+      std::chrono::seconds(storing_period), std::bind(&ParameterServer::StoreYamlFile, this));
+
+    RCLCPP_INFO(
+      this->get_logger(), "Will perform periodic persistent parameter storing every %ds",
+      storing_period);
+  }
 
   // Declare a parameter change request callback
   auto param_change_callback =

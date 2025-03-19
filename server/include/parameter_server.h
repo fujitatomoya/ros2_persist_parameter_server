@@ -30,9 +30,10 @@ public:
   RCLCPP_SMART_PTR_DEFINITIONS(ParameterServer)
 
   ParameterServer(
-    const std::string& node_name,
+    const std::string & node_name,
     const rclcpp::NodeOptions & options,
-    const std::string& persistent_yaml_file);
+    const std::string & persistent_yaml_file,
+    unsigned int storing_period);
   ~ParameterServer();
 
 private:
@@ -69,6 +70,9 @@ private:
 
   // set parameters callback handler
   OnSetParametersCallbackHandle::SharedPtr callback_handler_;
+
+  // for periodic storing to the file system
+  rclcpp::TimerBase::SharedPtr timer_;
 };
 
 #endif // __PARAMETER_SERVER_H__

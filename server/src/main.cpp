@@ -39,7 +39,9 @@ int main(int argc, char **argv)
     ("allow-declare,d", value<bool>()->default_value(true),
     "enable(true) / disable(false) allow_undeclared_parameters via node option (default true)")
     ("allow-override,o", value<bool>()->default_value(true),
-    "enable(true) / disable(false) automatically_declare_parameters_from_overrides via node option (default true)");
+    "enable(true) / disable(false) automatically_declare_parameters_from_overrides via node option (default true)")
+    ("storing-period,s", value<unsigned int>()->default_value(60),
+    "period in seconds for periodic persistent parameter storing (default 60). No periodic storing is performed if this parameter is set to 0");
 
   variables_map vm;
   store(basic_command_line_parser<char>(nonros_args).options(description).run(), vm);
@@ -49,6 +51,7 @@ int main(int argc, char **argv)
   string opt_file("/tmp/parameter_server.yaml");
   bool opt_allow_declare = true;
   bool opt_allow_override = true;
+  unsigned int storing_period = 60;
 
   if (vm.count("help"))
   {
@@ -61,6 +64,7 @@ int main(int argc, char **argv)
     opt_file = vm["file-path"].as<string>();
     opt_allow_declare = vm["allow-declare"].as<bool>();
     opt_allow_override = vm["allow-override"].as<bool>();
+    storing_period = vm["storing-period"].as<unsigned int>();
   }
 
   rclcpp::NodeOptions options = (
@@ -72,7 +76,7 @@ int main(int argc, char **argv)
   ParameterServer::SharedPtr node = nullptr;
   try
   {
-    node = ParameterServer::make_shared(node_name, options, opt_file);
+    node = ParameterServer::make_shared(node_name, options, opt_file, storing_period);
     if (node == nullptr)
     {
       throw std::bad_alloc();
@@ -94,4 +98,3 @@ int main(int argc, char **argv)
   rclcpp::shutdown();
   return ret;
 }
-
