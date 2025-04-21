@@ -73,6 +73,15 @@ ParameterServer::ParameterServer(
   // callback_handler_ needs to be alive to keep the callback functional
   callback_handler_ = this->add_on_set_parameters_callback(param_change_callback);
 
+  save_trigger_ = this->create_service<std_srvs::srv::Trigger>("~/save_params",
+    [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr& req,
+      [[maybe_unused]] const std_srvs::srv::Trigger::Response::SharedPtr& res
+    ) {
+      RCLCPP_INFO(this->get_logger(), "Parameter save manually requested");
+      this->StoreYamlFile();
+      res->success = true;
+  });
+
   LoadYamlFile();
 }
 

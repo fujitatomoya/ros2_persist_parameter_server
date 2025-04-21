@@ -21,6 +21,7 @@
 #include <atomic>
 
 #include "rclcpp/rclcpp.hpp"
+#include "std_srvs/srv/trigger.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 #include "yaml-cpp/yaml.h"
 
@@ -73,6 +74,9 @@ private:
 
   // for periodic storing to the file system
   rclcpp::TimerBase::SharedPtr timer_;
+
+  // For manual triggering of save
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr save_trigger_;
 };
 
 #endif // __PARAMETER_SERVER_H__
