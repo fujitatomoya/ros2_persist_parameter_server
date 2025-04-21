@@ -27,6 +27,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(rmw REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS program_options filesystem)
@@ -65,7 +66,7 @@ target_include_directories(server
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-ament_target_dependencies(server rclcpp rclcpp_components std_msgs rcutils)
+ament_target_dependencies(server rclcpp rclcpp_components std_msgs std_srvs rcutils)
 
 install(TARGETS server DESTINATION lib/${PROJECT_NAME})
 
