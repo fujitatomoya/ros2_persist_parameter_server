@@ -22,6 +22,7 @@
   <depend>rmw</depend>
   <depend>rmw_implementation_cmake</depend>
   <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
   <depend>yaml_cpp_vendor</depend>
 
   <exec_depend>launch_ros</exec_depend>
