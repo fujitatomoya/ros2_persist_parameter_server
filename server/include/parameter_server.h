@@ -73,6 +73,8 @@ private:
 
   // for periodic storing to the file system
   rclcpp::TimerBase::SharedPtr timer_;
+
+  bool allow_dynamic_typing_ = false;
 };
 
 #endif // __PARAMETER_SERVER_H__
