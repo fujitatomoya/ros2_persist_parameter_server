@@ -41,7 +41,9 @@ int main(int argc, char **argv)
     ("allow-override,o", value<bool>()->default_value(true),
     "enable(true) / disable(false) automatically_declare_parameters_from_overrides via node option (default true)")
     ("storing-period,s", value<unsigned int>()->default_value(60),
-    "period in seconds for periodic persistent parameter storing (default 60). No periodic storing is performed if this parameter is set to 0");
+    "period in seconds for periodic persistent parameter storing (default 60). No periodic storing is performed if this parameter is set to 0")
+    ("allow-dynamic-typing,t", value<bool>()->default_value(false),
+    "When enabled (true), allows parameter type to change upon reading from persistence. Disabled (false) by default");
 
   variables_map vm;
   store(basic_command_line_parser<char>(nonros_args).options(description).run(), vm);
@@ -52,6 +54,7 @@ int main(int argc, char **argv)
   bool opt_allow_declare = true;
   bool opt_allow_override = true;
   unsigned int storing_period = 60;
+  bool opt_allow_dynamic_typing = false;
 
   if (vm.count("help"))
   {
@@ -65,12 +68,14 @@ int main(int argc, char **argv)
     opt_allow_declare = vm["allow-declare"].as<bool>();
     opt_allow_override = vm["allow-override"].as<bool>();
     storing_period = vm["storing-period"].as<unsigned int>();
+    opt_allow_dynamic_typing = vm["allow-dynamic-typing"].as<bool>();
   }
 
   rclcpp::NodeOptions options = (
     rclcpp::NodeOptions()
     .allow_undeclared_parameters(opt_allow_declare)
     .automatically_declare_parameters_from_overrides(opt_allow_override)
+    .append_parameter_override("allow_dynamic_typing", opt_allow_dynamic_typing)
     );
 
   ParameterServer::SharedPtr node = nullptr;

@@ -48,6 +48,8 @@ def generate_launch_description():
                 #     "true",
                 #     "--storing-period",
                 #     "60",
+                #     "--allow-dynamic-typing",
+                #     "true",
                 # ],
             )
         ]
