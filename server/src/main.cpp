@@ -76,12 +76,13 @@ int main(int argc, char **argv)
     .allow_undeclared_parameters(opt_allow_declare)
     .automatically_declare_parameters_from_overrides(opt_allow_override)
     .append_parameter_override("allow_dynamic_typing", opt_allow_dynamic_typing)
+    .append_parameter_override("storing_period", static_cast<int>(storing_period))
     );
 
   ParameterServer::SharedPtr node = nullptr;
   try
   {
-    node = ParameterServer::make_shared(node_name, options, opt_file, storing_period);
+    node = ParameterServer::make_shared(node_name, options, opt_file);
     if (node == nullptr)
     {
       throw std::bad_alloc();

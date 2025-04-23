@@ -32,8 +32,7 @@
 ParameterServer::ParameterServer(
   const std::string & node_name,
   const rclcpp::NodeOptions & options,
-  const std::string & persistent_yaml_file,
-  unsigned int storing_period)
+  const std::string & persistent_yaml_file)
 : Node(node_name, options),
   param_update_(false),
   persistent_yaml_file_(persistent_yaml_file),
@@ -41,20 +40,26 @@ ParameterServer::ParameterServer(
 {
   RCLCPP_DEBUG(this->get_logger(), "%s yaml:%s", __PRETTY_FUNCTION__, persistent_yaml_file_.c_str());
 
+  int storing_period = 0;
   // if automatically_declare_parameters_from_overrides is false, then the parameter_overrides will not be declared.
-  // So it is safer to fetch the value of allow_dynamic_typing directly from options.parameter_overrides()
+  // So it is safer to fetch the passed parameters directly from options.parameter_overrides()
   const std::vector<rclcpp::Parameter> & parameter_overrides = options.parameter_overrides();
-  auto it_parameter_overrides = std::find_if(
-    parameter_overrides.begin(), parameter_overrides.end(),
-    [](rclcpp::Parameter const & param) { return param.get_name() == "allow_dynamic_typing"; });
-  if (it_parameter_overrides != parameter_overrides.end()) {
-    allow_dynamic_typing_ = it_parameter_overrides->as_bool();
-    if (allow_dynamic_typing_) {
-      RCLCPP_INFO(
-        this->get_logger(),
-        "Dynamic typing enabled. Read persistent parameters will be dynamically typed.");
+  for (const rclcpp::Parameter & param : parameter_overrides) {
+    if (param.get_name() == "allow_dynamic_typing") {
+      allow_dynamic_typing_ = param.as_bool();
+    }
+    if (param.get_name() == "storing_period") {
+      storing_period = param.as_int();
     }
   }
+
+  if (allow_dynamic_typing_) {
+    RCLCPP_INFO(
+      this->get_logger(),
+      "Dynamic typing enabled. Read persistent parameters will be dynamically typed.");
+  }
+
+  if (storing_period < 0) throw std::runtime_error("storing_period parameter value is not valid");
 
   if (!storing_period) {
     RCLCPP_INFO(

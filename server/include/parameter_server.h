@@ -32,8 +32,7 @@ public:
   ParameterServer(
     const std::string & node_name,
     const rclcpp::NodeOptions & options,
-    const std::string & persistent_yaml_file,
-    unsigned int storing_period);
+    const std::string & persistent_yaml_file);
   ~ParameterServer();
 
 private:
