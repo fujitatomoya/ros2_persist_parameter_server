@@ -36,15 +36,15 @@ add_executable(client
 
 target_link_libraries(client
   rclcpp::rclcpp
+  rclcpp_components::component
   rcutils::rcutils
+  ${std_msgs_TARGETS}
 )
 
 target_include_directories(client
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
-
-ament_target_dependencies(client rclcpp rclcpp_components std_msgs rcutils)
 
 install(TARGETS client DESTINATION lib/${PROJECT_NAME})
 
