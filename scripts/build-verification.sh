@@ -27,9 +27,11 @@ function exit_trap() {
     fi
 }
 
-function_get_signing_key_update () {
+# ROS signing key migration temporary workaround
+function get_signing_key_update () {
     trap exit_trap ERR
     echo "[${FUNCNAME[0]}]: update the signing key for ROS."
+    rm /etc/apt/sources.list.d/ros2-latest.list && rm /usr/share/keyrings/ros2-latest-archive-keyring.gpg
     apt update && apt install -y ca-certificates curl
     export ROS_APT_SOURCE_VERSION=$(curl -s https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | grep -F "tag_name" | awk -F\" '{print $4}')
     curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo $VERSION_CODENAME)_all.deb"
@@ -91,7 +93,7 @@ mark there
 trap exit_trap ERR
 
 # call install functions in sequence
-function_get_signing_key_update
+get_signing_key_update
 install_prerequisites
 setup_build_colcon_env
 build_parameter_server
