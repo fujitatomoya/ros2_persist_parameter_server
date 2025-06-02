@@ -21,6 +21,7 @@ Comment Here
 
 ![bg 70%](https://images.squarespace-cdn.com/content/v1/606d378755a86f589aa297b7/1653397531343-6M4IQ4JWDQV1SQ8W17UN/HumbleHawksbill_TransparentBG-NoROS.png)
 ![bg 75%](https://images.squarespace-cdn.com/content/v1/606d378755a86f589aa297b7/ebf9b1d5-45b7-4a73-8f48-dc5d3f4fc8fc/JazzyJalisco_Final.png?format=2500w)
+![bg 90%](https://www.therobotreport.com/wp-content/uploads/2025/05/kilted-Kaiju-featured.jpg)
 ![bg 70%](https://images.squarespace-cdn.com/content/v1/606d378755a86f589aa297b7/1628726028642-TVRVRIQL914IVYWV8MG9/rolling.png)
 
 <!---
