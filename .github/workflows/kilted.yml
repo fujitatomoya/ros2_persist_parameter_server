@@ -1,4 +1,4 @@
-# This is workflow for parameter server with rolling
+# This is workflow for parameter server with kilted
 name: kilted
 
 on:
