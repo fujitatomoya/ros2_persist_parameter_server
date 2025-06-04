@@ -171,7 +171,7 @@ int main(int argc, char ** argv)
   std::shared_ptr<TestPersistParameter> test_client;
 
   int ret_code = 0;
-  // In case of an exception is thrown when performing an operation after `ctrl-c` occured.
+  // In case of an exception is thrown when performing an operation after `ctrl-c` occurred.
   try {
     test_client = std::make_shared<TestPersistParameter>("client", rclcpp::NodeOptions());
     /*

@@ -65,14 +65,14 @@ parameter server has the following scope for persistent parameter. since paramet
 | ---- | ---- | ---- |
 |  Parameter API  |  YES  |  ROS 2 Parameter Client API supported, since this activity can be detected via **/parameter_events**.  |
 |  Persistent Parameter File  |  YES  | parameter server dedicated argument to specify the file to load as parameters. in addition, all of the persistent parameters will be stored into this file during shutdown.<br> e.g) --file-path /tmp/parameter_server.yaml |
-|  Parameter Arguments  |  NO  |  e.g) --ros-args -p persistent.some_int:=42<br>some_int cannot be registed as persistent parameter, since this cannot be notified via **/parameter_events** to parameter server.  |
+|  Parameter Arguments  |  NO  |  e.g) --ros-args -p persistent.some_int:=42<br>some_int cannot be registered as persistent parameter, since this cannot be notified via **/parameter_events** to parameter server.  |
 |  Parameter File Arguments  |  NO  |  e.g) --ros-args --params-file ./parameters_via_cli.yaml<br>same with parameter arguments, cannot be registered as persistent parameter, since these cannot be notified via **/parameter_events**  to parameter server. |
 |  Launch Parameter  |  NO  |  e.g) ros2 launch parameter_server parameter_server.launch.py<br>same with parameter arguments, cannot be registered as persistent parameter, since these cannot be notified via **/parameter_events**  to parameter server.  |
 
 ### Configurable Options
 
 - Node Name
-  Since ROS 2 parameter is owned by node, node name will be needed to access the parameters, this is designed to clearify semantics for the parameters and owners. Node name will be "parameter_server" if node name is not specifies. so the other nodes can use "parameter_server" as well to access in the same system Parameter Server. If there must exist multiple parameter servers, these parameter servers need to specify a different node name, such as "parameter_server_[special_string]", please notice that ROS 2 node name can only contains alphanumerics and '_'.
+  Since ROS 2 parameter is owned by node, node name will be needed to access the parameters, this is designed to clarify semantics for the parameters and owners. Node name will be "parameter_server" if node name is not specifies. so the other nodes can use "parameter_server" as well to access in the same system Parameter Server. If there must exist multiple parameter servers, these parameter servers need to specify a different node name, such as "parameter_server_[special_string]", please notice that ROS 2 node name can only contains alphanumerics and '_'.
 - Persistent Volume
   Definition of "Persistent" is different from user and use cases, so it should be configurable to set the path to store the persistent --file-path FILE_PATH parameter. Expecting if the parameter's lifespan is system boot, path would be "/tmp" because user wants a fresh start via reboot. Or maybe physical persistent volume is chosen if users want to keep the parameter into the hardware storage. At the initialization time, Parameter Server will load the parameters from the storage which is specified by user.
 - Node Options
@@ -80,7 +80,7 @@ parameter server has the following scope for persistent parameter. since paramet
   allow_undeclared_parameters: (default true)
   automatically_declare_parameters_from_overrides: (default true)
 
-all of the configuration options will be passed via arguments as followings.
+all of the configuration options will be passed via arguments as following.
 
 <table>
     <thead>
