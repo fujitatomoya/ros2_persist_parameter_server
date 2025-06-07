@@ -72,7 +72,7 @@ function build_images() {
     echo "[${FUNCNAME[0]}]: building ros2 persistent parameter server docker container images."
     for distro in "${ros_distros[@]}"; do
         echo "----- $distro image building"
-        docker build --rm -f ./docker/Dockerfile --build-arg="ROS_DISTRO=$distro" --build-arg="COLCON_WS=$COLCON_WS" -t $DOCKERHUB_USERNAME/ros2_param_server:$distro .
+        docker build --pull --rm -f ./docker/Dockerfile --build-arg="ROS_DISTRO=$distro" --build-arg="COLCON_WS=$COLCON_WS" -t $DOCKERHUB_USERNAME/ros2_param_server:$distro .
     done
     echo "----- all images successfully generated!!! -----"
 }
