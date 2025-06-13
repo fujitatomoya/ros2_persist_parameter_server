@@ -117,6 +117,77 @@ class TestPersistParameter
       return do_read_and_check(param_name, changed_value.c_str(), testcase);
     }
 
+    /*
+    * Used to check that reloading works. If save hasn't been called, parameters should be overwritten.
+    * @param param_name The name of parameter.
+    * @param changed_value The value that you want to set.
+    * @param testcase The test case description.
+    */
+    void do_reload_and_check(const std::string & param_name, const std::string & changed_value, const std::string & expected_value, const std::string & testcase) {      
+      bool ret = false;
+
+      ret = persist_param_client_.modify_parameter<std::string>(param_name, changed_value);
+      /*
+      * If the Modify operation failed, record it in result_map, and no need to run the 
+      * subsequent read tests.
+      */
+      if(!ret) {
+        this->set_result(testcase, false);
+        throw SetOperationError();
+      }
+
+      /**
+       * Attempt to reload the YAML file
+       */
+      auto reload_res = persist_param_client_.reload_yaml();
+      if(!reload_res || !reload_res->success) {
+        this->set_result(testcase, false);
+        throw SetOperationError();
+      }
+
+      return do_read_and_check(param_name, expected_value.c_str(), testcase);
+    }
+
+    /*
+    * Change the value of parameter, save, read, then check.
+    * @param param_name The name of parameter.
+    * @param changed_value The value that you want to set.
+    * @param testcase The test case description.
+    */
+    void do_save_and_check(const std::string & param_name, const std::string & changed_value, const std::string & testcase) {
+      bool ret = false;
+
+      ret = persist_param_client_.modify_parameter<std::string>(param_name, changed_value);
+      /*
+      * If the Modify operation failed, record it in result_map, and no need to run the 
+      * subsequent read tests.
+      */
+      if(!ret) {
+        this->set_result(testcase, false);
+        throw SetOperationError();
+      }
+
+      /**
+       * Manually trigger a save, if it returns false then there must have been an error in saving.
+       */
+      auto save_res = persist_param_client_.trigger_save();
+      if(!save_res || !save_res->success) {
+        this->set_result(testcase, false);
+        throw SetOperationError();
+      }
+
+      /**
+       * Attempt to reload the YAML file
+       */
+      auto reload_res = persist_param_client_.reload_yaml();
+      if(!reload_res || !reload_res->success) {
+        this->set_result(testcase, false);
+        throw SetOperationError();
+      }
+
+      return do_read_and_check(param_name, changed_value.c_str(), testcase);
+    }
+
     // Get all test results.
     inline int  print_result() const
     {
@@ -218,6 +289,21 @@ int main(int argc, char ** argv)
       test_client->do_read_and_check("new_string", nullptr, "i. Test New Added Normal Parameter Not Stores To File");
       test_client->do_read_and_check("persistent.new_string", "Hello NewString", "j. Test New Added Persistent Parameter Stores To File");
     }
+
+    /*
+    * Test: Modifying parameters the same as above but saving the file and then checking. 
+    */
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Change the value of parameter to `Hello` : ");
+      test_client->do_save_and_check("persistent.test_saved_first", "Hello", "k. Set and saved new parameter successfully");
+      RCLCPP_INFO(test_client->get_logger(), "Add a new parameter to parameter file : ");
+      test_client->do_save_and_check("persistent.test_saved_second", "SecondString", "l. Set and saved new parameter successfully");
+      RCLCPP_INFO(test_client->get_logger(), "Update and save a parameter and make sure it saved successfully : ");
+      test_client->do_save_and_check("persistent.test_saved_first", "World", "m. Set and saved existing parameter successfully");
+      RCLCPP_INFO(test_client->get_logger(), "Update a parameter and reload without saving : ");
+      test_client->do_reload_and_check("persistent.test_saved_second", "Discarded", "SecondString", "n. Set and saved new parameter successfully");
+    }
+
   } catch (const rclcpp::exceptions::RCLError & e) {
     ret_code = -1;
     RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
