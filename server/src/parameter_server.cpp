@@ -119,6 +119,23 @@ ParameterServer::ParameterServer(
       }
   });
 
+  reload_trigger_ = this->create_service<std_srvs::srv::Trigger>("~/reload_params",
+    [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr& req,
+      [[maybe_unused]] const std_srvs::srv::Trigger::Response::SharedPtr& res
+    ) {
+      RCLCPP_INFO(this->get_logger(), "Parameter reload manually requested");
+      try {
+        this->LoadYamlFile();
+        res->success = true;
+        res->message = "Parameters reloaded";
+      } catch(const std::exception& ex) {
+        std::ostringstream ss;
+        ss << "Parameters could not be reloaded. Error: " << ex.what();
+        res->success = false;
+        res->message = ss.str();
+      }
+  });
+
   LoadYamlFile();
 }
 
