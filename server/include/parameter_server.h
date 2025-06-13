@@ -78,6 +78,7 @@ private:
 
   // For manual triggering of save
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr save_trigger_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr reload_trigger_;
 };
 
 #endif // __PARAMETER_SERVER_H__
