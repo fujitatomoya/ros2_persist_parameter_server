@@ -154,6 +154,79 @@ public:
     this->set_result(testcase, !ret);
   }
 
+  /*
+  * Used to check that reloading works. If save hasn't been called, parameters should be overwritten.
+  * @param param_name The name of parameter.
+  * @param changed_value The value that you want to set.
+  * @param testcase The test case description.
+  */
+ template <typename ValueType>
+  void do_reload_and_check(const std::string & param_name, const ValueType & changed_value, const std::optional<ValueType> & expected_value, const std::string & testcase) {      
+    bool ret = false;
+
+    ret = persist_param_client_.modify_parameter<std::string>(param_name, changed_value);
+    /*
+    * If the Modify operation failed, record it in result_map, and no need to run the 
+    * subsequent read tests.
+    */
+    if(!ret) {
+      this->set_result(testcase, false);
+      throw SetOperationError();
+    }
+
+    /**
+     * Attempt to reload the YAML file
+     */
+    auto reload_res = persist_param_client_.reload_yaml();
+    if(!reload_res || !reload_res->success) {
+      this->set_result(testcase, false);
+      throw SetOperationError();
+    }
+
+    return do_read_and_check<ValueType>(param_name, expected_value, testcase);
+  }
+
+  /*
+  * Change the value of parameter, save, read, then check.
+  * @param param_name The name of parameter.
+  * @param changed_value The value that you want to set.
+  * @param testcase The test case description.
+  */
+ template <typename ValueType>
+  void do_save_and_check(const std::string & param_name, const ValueType & changed_value, const std::string & testcase) {
+    bool ret = false;
+
+    ret = persist_param_client_.modify_parameter<std::string>(param_name, changed_value);
+    /*
+    * If the Modify operation failed, record it in result_map, and no need to run the 
+    * subsequent read tests.
+    */
+    if(!ret) {
+      this->set_result(testcase, false);
+      throw SetOperationError();
+    }
+
+    /**
+     * Manually trigger a save, if it returns false then there must have been an error in saving.
+     */
+    auto save_res = persist_param_client_.trigger_save();
+    if(!save_res || !save_res->success) {
+      this->set_result(testcase, false);
+      throw SetOperationError();
+    }
+
+    /**
+     * Attempt to reload the YAML file
+     */
+    auto reload_res = persist_param_client_.reload_yaml();
+    if(!reload_res || !reload_res->success) {
+      this->set_result(testcase, false);
+      throw SetOperationError();
+    }
+
+    return do_read_and_check<ValueType>(param_name, changed_value, testcase);
+  }
+
   // Get all test results.
   inline int print_result() const
   {
