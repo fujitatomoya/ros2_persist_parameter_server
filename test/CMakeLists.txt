@@ -36,7 +36,9 @@ add_executable(client_default
 
 target_link_libraries(client_default
   rclcpp::rclcpp
+  rclcpp_components::component
   rcutils::rcutils
+  ${std_msgs_TARGETS}
 )
 
 target_include_directories(client_default

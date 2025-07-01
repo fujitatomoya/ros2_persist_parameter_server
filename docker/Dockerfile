@@ -1,5 +1,5 @@
 # Build:
-#  docker build --rm -f ./docker/Dockerfile --build-arg="ROS_DISTRO=rolling" --build-arg="COLCON_WS=/root/colcon_ws" -t <user_name>/ros2_param_server:rolling .
+#  docker build --pull --rm -f ./docker/Dockerfile --build-arg="ROS_DISTRO=rolling" --build-arg="COLCON_WS=/root/colcon_ws" -t <user_name>/ros2_param_server:rolling .
 #
 # Usage:
 #  docker pull <user_name>/ros2_param_server:rolling

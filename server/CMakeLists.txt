@@ -45,18 +45,22 @@ if (yaml-cpp_FOUND)
   message(STATUS "yaml-cpp package is greater equal than version 0.8.0")
   target_link_libraries(server
     rclcpp::rclcpp
+    rclcpp_components::component
     rcutils::rcutils
-    ${Boost_LIBRARIES}
     yaml-cpp::yaml-cpp
+    ${std_msgs_TARGETS}
+    ${Boost_LIBRARIES}
   )
 else()
   message(STATUS "yaml-cpp package is less than version 0.8.0")
   find_package(yaml-cpp REQUIRED)
   target_link_libraries(server
     rclcpp::rclcpp
+    rclcpp_components::component
     rcutils::rcutils
-    ${Boost_LIBRARIES}
     yaml-cpp
+    ${std_msgs_TARGETS}
+    ${Boost_LIBRARIES}
   )
 endif()
 
@@ -64,8 +68,6 @@ target_include_directories(server
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
-
-ament_target_dependencies(server rclcpp rclcpp_components std_msgs rcutils)
 
 install(TARGETS server DESTINATION lib/${PROJECT_NAME})
 
