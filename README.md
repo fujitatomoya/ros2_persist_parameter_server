@@ -83,7 +83,7 @@ parameter server has the following scope for persistent parameter. since paramet
   - allow_undeclared_parameters: (default true)
   - automatically_declare_parameters_from_overrides: (default true)
   - allow_dynamic_typing: (default false)
-all of the configuration options will be passed via arguments as followings.
+all of the configuration options will be passed via arguments as following.
 
 <table>
     <thead>
