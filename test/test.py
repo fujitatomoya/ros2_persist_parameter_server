@@ -14,7 +14,13 @@ import time
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 sleep_time = 3
 launchServerCmd = ['ros2', 'launch', 'ros2_persistent_parameter_server_test', 'test.launch.py']
-launchClientCmd = ['ros2', 'run', 'ros2_persistent_parameter_server_test', 'client']
+launchClientCmd = ['ros2', 'run',
+                   'ros2_persistent_parameter_server_test', 'client_default']
+
+launchServerCmdWithNodeOptions = [
+    'ros2', 'launch', 'ros2_persistent_parameter_server_test', 'test.launch.py', 'allow_dynamic_typing:=true']
+launchClientCmdWithNodeOptions = [
+    'ros2', 'run', 'ros2_persistent_parameter_server_test', 'client_with_node_options']
 
 if shutil.which('ros2') is None:
     print("source <colcon_ws>/install/setup.bash...then retry.")
@@ -55,6 +61,21 @@ return_code = client_process.wait()
 
 # Cleanup the process and thread
 t.join()
+os.killpg(os.getpgid(server_process.pid), signal.SIGTERM)
+
+print("\nTest with default options finished. Proceeding to testing with node options")
+
+# Start the server
+server_process = subprocess.Popen(
+    launchServerCmdWithNodeOptions, preexec_fn=os.setsid)
+print(f"Parameter Server Process started with PID: {server_process.pid}")
+
+# Start test client process
+client_process = subprocess.Popen(launchClientCmdWithNodeOptions)
+print(f"Parameter Client Process started with PID: {client_process.pid}")
+
+# Wait until the client process finishes and then kill the server
+return_code = client_process.wait()
 os.killpg(os.getpgid(server_process.pid), signal.SIGTERM)
 
 print("\nTest process finished.")

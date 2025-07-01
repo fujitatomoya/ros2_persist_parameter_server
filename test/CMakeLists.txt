@@ -29,24 +29,43 @@ find_package(rcutils REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rmw REQUIRED)
 
-add_executable(client
-  src/test.cpp
+add_executable(client_default
+  src/test_default.cpp
   src/persist_parameter_client.cpp
 )
 
-target_link_libraries(client
+target_link_libraries(client_default
   rclcpp::rclcpp
   rclcpp_components::component
   rcutils::rcutils
   ${std_msgs_TARGETS}
 )
 
-target_include_directories(client
+target_include_directories(client_default
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-install(TARGETS client DESTINATION lib/${PROJECT_NAME})
+ament_target_dependencies(client_default rclcpp rclcpp_components std_msgs rcutils)
+
+add_executable(client_with_node_options
+  src/test_with_node_options.cpp
+  src/persist_parameter_client.cpp
+)
+
+target_link_libraries(client_with_node_options
+  rclcpp::rclcpp
+  rcutils::rcutils
+)
+
+target_include_directories(client_with_node_options
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+ament_target_dependencies(client_with_node_options rclcpp rclcpp_components std_msgs rcutils)
+
+install(TARGETS client_default client_with_node_options DESTINATION lib/${PROJECT_NAME})
 
 # Install launch files.
 install(DIRECTORY
