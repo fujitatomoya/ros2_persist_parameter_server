@@ -244,6 +244,7 @@ These samples verify the following functions.
 - persistent parameter can be read/modified from parameter client.
 - non-persistent parameter cannot be read/stored to/from the file system.
 - non-persistent parameter can be read/modified from parameter client
+- parameter type can be changed dynamically only when allow-dynamic-typing is set
 
 make sure to add the path of `launch` package to the PATH environment.
 
@@ -284,6 +285,19 @@ All of the test is listed with result as following
 [ros2-2] [INFO] [1601447662.145969623] [client]: h. Test Persistent Parameter Stores To File                  :             PASS
 [ros2-2] [INFO] [1601447662.145990707] [client]: i. Test New Added Normal Parameter Not Stores To File        :             PASS
 [ros2-2] [INFO] [1601447662.146011312] [client]: j. Test New Added Persistent Parameter Stores To File        :             PASS
+
+Test with default options finished. Proceeding to testing with node options
+......   // omit some output logs
+[INFO] [1751375380.682839476] [client]: ***************************************************************************
+[INFO] [1751375380.682849383] [client]: *********************************Test Result*******************************
+[INFO] [1751375380.682881950] [client]: a. dynamically change the type of an existing parameter      :             PASS
+[INFO] [1751375380.682896493] [client]: b. revert the type of the parameter to int                   :             PASS
+[INFO] [1751375380.682901049] [client]: c. create new parameter with type double                     :             PASS
+[INFO] [1751375380.682905050] [client]: d. change the type of the new parameter to string            :             PASS
+......   // omit some output logs
+Test process finished.
+Return Code: 0
+The process completed successfully.
 ```
 
 ## Known Issues
