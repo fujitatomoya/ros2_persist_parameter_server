@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: parameter-server-config
+data:
+  parameter_server.yaml: |
+    /**:
+        ros__parameters:
+            # This file is expected to be used as following,
+            # > ros2 run parameter_server server --file-path /tmp/parameter_server.yaml
+            #
+            # Not persistent parameter.
+            # These just will be loaded as normal parameters.
+            some_int: 1
+            a_string: "Hello world"
+            pi: 3.14
+            some_lists:
+                some_integers: [1, 2, 3, 4]
+            # persistent parameter.
+            # these parameters will be registered as persistent parameter,
+            # so during shutdown, these will be stored back in the storage if any updates available.
+            persistent:
+                some_int: 1
+                a_string: 'Hello world'
+                pi: 3.14
+                some_lists:
+                    some_integers: [1, 2, 3, 4]

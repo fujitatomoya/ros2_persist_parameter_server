@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: parameter-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: parameter-server
+  template:
+    metadata:
+      labels:
+        app: parameter-server
+    spec:
+      containers:
+      - name: parameter-server
+        image: your-docker-registry/ros2-parameter-server:latest # IMPORTANT: Replace with your image
+        command: ["/bin/bash", "-c"]
+        args:
+        - "source /opt/ros/rolling/setup.bash && source /root/colcon_ws/install/setup.bash && ros2 run parameter_server server --file-path /etc/config/parameter_server.yaml"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+      volumes:
+      - name: config-volume
+        configMap:
+          name: parameter-server-config
