@@ -21,6 +21,7 @@
 #include <atomic>
 
 #include "rclcpp/rclcpp.hpp"
+#include "std_srvs/srv/trigger.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 #include "yaml-cpp/yaml.h"
 
@@ -43,10 +44,11 @@ private:
 
   // To store yaml into a file, think it's more convenient to use yaml_cpp than libyaml.
   // (rcl_yaml_param_parser/libyaml not contain store function)
-  void StoreYamlFile();
+  void StoreYamlFile(bool check = false);
 
   // To check whether yaml file is valid
   void CheckYamlFile();
+  void CheckYamlFile(const std::string& file);
   void ValidateYamlFile(YAML::Node node, const std::string& key = "");
   void SaveNode(YAML::Emitter& out, YAML::Node node, const std::string& key = "");
 
@@ -73,6 +75,10 @@ private:
 
   // for periodic storing to the file system
   rclcpp::TimerBase::SharedPtr timer_;
+
+  // For manual triggering of save
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr save_trigger_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr reload_trigger_;
 };
 
 #endif // __PARAMETER_SERVER_H__
