@@ -24,6 +24,7 @@ See [overview slide deck](https://raw.githack.com/fujitatomoya/ros2_persist_para
     - [Prerequisites](#prerequisites)
     - [Build](#build)
     - [Run](#run)
+  - [Kubernetes](#kubernetes)
   - [Test](#test)
     - [Run](#run-1)
   - [Known Issues](#known-issues)
@@ -212,6 +213,11 @@ to install local colcon workspace,
    # ros2 param get /parameter_server persistent.some_lists.some_integers
    String value is: 81,82,83,84
    ```
+
+## Kubernetes
+
+persistent parameter server can be deployed with Kubernetes deployment and configmap resources.
+Please see [How to deploy the parameter server with Kubernetes](./k8s/k8s_tutorial.md) for more information.
 
 ## Test
 
