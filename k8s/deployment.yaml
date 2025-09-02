@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: parameter-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: parameter-server
+  template:
+    metadata:
+      labels:
+        app: parameter-server
+    spec:
+      containers:
+      - name: parameter-server
+        image: tomoyafujita/ros2_param_server:rolling
+        command: ["/bin/bash", "-c"]
+        args:
+        - "source /opt/ros/rolling/setup.bash && source /root/colcon_ws/install/setup.bash && ros2 run parameter_server server --file-path /etc/config/parameter_server.yaml"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+      volumes:
+      - name: config-volume
+        configMap:
+          name: server-initial-parameters
