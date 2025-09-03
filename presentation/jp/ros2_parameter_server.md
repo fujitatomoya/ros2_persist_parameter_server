@@ -48,6 +48,28 @@ Comment Here
 
 ---
 
+## How to Run
+
+- Docker
+
+```console
+$ docker run -it tomoyafujita/ros2_param_server:rolling /bin/bash
+root@bf4d904e3800:~/colcon_ws# ros2 run parameter_server server
+```
+
+- Kubernetes
+
+```console
+$ kubectl apply -f ./k8s/parameters.yaml
+$ kubectl apply -f ./k8s/deployment.yaml
+```
+
+<!---
+Comment Here
+--->
+
+---
+
 ## Issues and PRs are always welcome 🚀
 
 https://github.com/fujitatomoya/ros2_persist_parameter_server
