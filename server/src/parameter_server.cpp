@@ -46,7 +46,11 @@ ParameterServer::ParameterServer(
       this->get_logger(), "Period is 0. Will not perform periodic persistent parameter storing");
   } else {
     timer_ = this->create_wall_timer(
-      std::chrono::seconds(storing_period), std::bind(&ParameterServer::StoreYamlFile, this));
+      std::chrono::seconds(storing_period), 
+      [this]{ 
+        StoreYamlFile(); 
+      }
+    );
 
     RCLCPP_INFO(
       this->get_logger(), "Will perform periodic persistent parameter storing every %ds",
@@ -72,6 +76,32 @@ ParameterServer::ParameterServer(
     };
   // callback_handler_ needs to be alive to keep the callback functional
   callback_handler_ = this->add_on_set_parameters_callback(param_change_callback);
+
+  save_trigger_ = this->create_service<std_srvs::srv::Trigger>("~/save_params",
+    [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr& req,
+      [[maybe_unused]] const std_srvs::srv::Trigger::Response::SharedPtr& res
+    ) {
+      RCLCPP_INFO(this->get_logger(), "Parameter save manually requested");
+      try {
+        this->StoreYamlFile(true);
+        res->success = true;
+      } catch(...) {
+        res->success = false;
+      }
+  });
+
+  reload_trigger_ = this->create_service<std_srvs::srv::Trigger>("~/reload_params",
+    [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr& req,
+      [[maybe_unused]] const std_srvs::srv::Trigger::Response::SharedPtr& res
+    ) {
+      RCLCPP_INFO(this->get_logger(), "Parameter reload manually requested");
+      try {
+        this->LoadYamlFile();
+        res->success = true;
+      } catch(...) {
+        res->success = false;
+      }
+  });
 
   LoadYamlFile();
 }
@@ -104,8 +134,12 @@ void ParameterServer::ValidateYamlFile(YAML::Node node, const std::string& key) 
 }
 
 void ParameterServer::CheckYamlFile() {
+  CheckYamlFile(persistent_yaml_file_);
+}
+
+void ParameterServer::CheckYamlFile(const std::string& file) {
   RCLCPP_DEBUG(this->get_logger(), "%s", __PRETTY_FUNCTION__);
-  YAML::Node parameter_config = YAML::LoadFile(persistent_yaml_file_);
+  YAML::Node parameter_config = YAML::LoadFile(file);
   // check format "YAML must be dictionary type and level 1 can only have one key"
   if ((parameter_config.size() == 1 && parameter_config.Type() != YAML::NodeType::Map) ||
       parameter_config.size() > 1) {
@@ -408,7 +442,7 @@ void ParameterServer::SaveNode(YAML::Emitter& out, YAML::Node node, const std::s
   out << YAML::EndMap;
 }
 
-void ParameterServer::StoreYamlFile()
+void ParameterServer::StoreYamlFile(bool check)
 {
   RCLCPP_DEBUG(this->get_logger(), "%s", __PRETTY_FUNCTION__);
 
@@ -598,6 +632,15 @@ void ParameterServer::StoreYamlFile()
     // use emitter to traverse all sub nodes, if value of Node is string, add ' between value.
     YAML::Emitter out;
     SaveNode(out, parameter_config);
+    if (check) {
+      const std::string tmp_filename = "/tmp/persistent_params_tmp_file.yaml";
+      std::ofstream test_fout(tmp_filename, std::ios::trunc);
+      test_fout << out.c_str();
+      test_fout.close();
+      CheckYamlFile(tmp_filename);
+      RCLCPP_DEBUG(this->get_logger(), "YAML Check succeeded");
+    }
+
     std::ofstream fout(persistent_yaml_file_);
     fout << out.c_str();
     fout.close();
