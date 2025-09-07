@@ -32,8 +32,7 @@ public:
   ParameterServer(
     const std::string & node_name,
     const rclcpp::NodeOptions & options,
-    const std::string & persistent_yaml_file,
-    unsigned int storing_period);
+    const std::string & persistent_yaml_file);
   ~ParameterServer();
 
 private:
@@ -73,6 +72,8 @@ private:
 
   // for periodic storing to the file system
   rclcpp::TimerBase::SharedPtr timer_;
+
+  bool allow_dynamic_typing_ = false;
 };
 
 #endif // __PARAMETER_SERVER_H__
