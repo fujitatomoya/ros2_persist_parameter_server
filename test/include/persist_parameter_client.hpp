@@ -16,6 +16,7 @@
 #define __PARAMETER_CLIENT_H__
 
 #include "rclcpp/rclcpp.hpp"
+#include "std_srvs/srv/trigger.hpp"
 
 using namespace std::chrono_literals;
 
@@ -94,8 +95,24 @@ public:
     return ret;
   }
 
+  inline std::shared_ptr<std_srvs::srv::Trigger::Response> trigger_save() {
+    auto trigger = std::make_shared<std_srvs::srv::Trigger::Request>();
+    auto fut = this->save_trigger_client_->async_send_request(trigger);
+    rclcpp::spin_until_future_complete(this->get_node_base_interface(), fut);
+    return fut.get();
+  }
+
+  inline std::shared_ptr<std_srvs::srv::Trigger::Response> reload_yaml() {
+    auto trigger = std::make_shared<std_srvs::srv::Trigger::Request>();
+    auto fut = this->reload_trigger_client_->async_send_request(trigger);
+    rclcpp::spin_until_future_complete(this->get_node_base_interface(), fut);
+    return fut.get();
+  }
+
 private:
    std::unique_ptr<rclcpp::SyncParametersClient> sync_param_client_;
+   std::shared_ptr<rclcpp::Client<std_srvs::srv::Trigger>> save_trigger_client_;
+   std::shared_ptr<rclcpp::Client<std_srvs::srv::Trigger>> reload_trigger_client_;
 };
 
 #endif
