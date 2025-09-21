@@ -132,6 +132,10 @@ all of the configuration options will be passed via arguments as following.
 
 ## Getting Started
 
+Tutorial Video is provided by [The Construct Robotics Institute](https://www.theconstruct.ai/).
+
+[<img src="https://img.youtube.com/vi/1xYjYd3wTKo/maxresdefault.jpg" width="250"/>](https://www.youtube.com/watch?v=1xYjYd3wTKo)
+
 ### Supported Distribution
 
 - [ROS 2 Rolling Ridley](https://docs.ros.org/en/rolling/index.html)
