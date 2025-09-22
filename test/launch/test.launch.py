@@ -16,12 +16,24 @@
 
 from launch import LaunchDescription
 from launch.substitutions import EnvironmentVariable
-import launch
+from launch.actions import ExecuteProcess, DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
+
 
 def generate_launch_description():
+    allow_dynamic_typing_arg = DeclareLaunchArgument(
+        'allow_dynamic_typing', default_value='false', description='Enable dynamic typing for parameters'
+    )
+
     return LaunchDescription([
-        launch.actions.ExecuteProcess(
-            cmd = ['ros2', 'run', 'parameter_server', 'server', '--file-path', '/tmp/test/parameter_server.yaml'],
+        allow_dynamic_typing_arg,
+        ExecuteProcess(
+            cmd=[
+                'ros2', 'run', 'parameter_server', 'server',
+                '--file-path', '/tmp/test/parameter_server.yaml',
+                '--allow-dynamic-typing', LaunchConfiguration(
+                    'allow_dynamic_typing')
+            ],
             respawn=True
         )
     ])

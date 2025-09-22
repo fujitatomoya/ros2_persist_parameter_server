@@ -32,14 +32,34 @@
 ParameterServer::ParameterServer(
   const std::string & node_name,
   const rclcpp::NodeOptions & options,
-  const std::string & persistent_yaml_file,
-  unsigned int storing_period)
+  const std::string & persistent_yaml_file)
 : Node(node_name, options),
   param_update_(false),
   persistent_yaml_file_(persistent_yaml_file),
   node_name_(get_name())
 {
   RCLCPP_DEBUG(this->get_logger(), "%s yaml:%s", __PRETTY_FUNCTION__, persistent_yaml_file_.c_str());
+
+  int storing_period = 0;
+  // if automatically_declare_parameters_from_overrides is false, then the parameter_overrides will not be declared.
+  // So it is safer to fetch the passed parameters directly from options.parameter_overrides()
+  const std::vector<rclcpp::Parameter> & parameter_overrides = options.parameter_overrides();
+  for (const rclcpp::Parameter & param : parameter_overrides) {
+    if (param.get_name() == "allow_dynamic_typing") {
+      allow_dynamic_typing_ = param.as_bool();
+    }
+    if (param.get_name() == "storing_period") {
+      storing_period = param.as_int();
+    }
+  }
+
+  if (allow_dynamic_typing_) {
+    RCLCPP_INFO(
+      this->get_logger(),
+      "Dynamic typing enabled. Read persistent parameters will be dynamically typed.");
+  }
+
+  if (storing_period < 0) throw std::runtime_error("storing_period parameter value is not valid");
 
   if (!storing_period) {
     RCLCPP_INFO(
@@ -213,10 +233,9 @@ void ParameterServer::LoadYamlFile()
         {
           // declare parameter
           RCLCPP_DEBUG(this->get_logger(), "declare %s %s", name.c_str(), to_string(value).c_str());
-          node_parameters->declare_parameter(
-            name,
-            value,
-            rcl_interfaces::msg::ParameterDescriptor());
+          rcl_interfaces::msg::ParameterDescriptor descriptor;
+          descriptor.dynamic_typing = allow_dynamic_typing_;
+          node_parameters->declare_parameter(name, value, descriptor);
 
           // 1. if automatically_declare_parameters_from_overrides is false,
           // parameter from __params: not declared but saved in overrides list,
