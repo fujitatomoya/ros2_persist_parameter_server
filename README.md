@@ -77,7 +77,7 @@ parameter server has the following scope for persistent parameter. since paramet
 - Persistent Volume
   Definition of "Persistent" is different from user and use cases, so it should be configurable to set the path to store the persistent --file-path FILE_PATH parameter. Expecting if the parameter's lifespan is system boot, path would be "/tmp" because user wants a fresh start via reboot. Or maybe physical persistent volume is chosen if users want to keep the parameter into the hardware storage. At the initialization time, Parameter Server will load the parameters from the storage which is specified by user.
 - Storing Period
-  By default, this option is enabled, allowing any parameter name to be set on the parameter server without prior declaration. If disabled, parameters must be explicitly declared before being set.
+  It sets the interval for periodically saving parameters to the file system, and that setting the value to 0 disables periodic storing.
 - Node Options
   there are three important options:
   - allow_undeclared_parameters: (default true)

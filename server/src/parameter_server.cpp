@@ -59,7 +59,10 @@ ParameterServer::ParameterServer(
       "Dynamic typing enabled. Read persistent parameters will be dynamically typed.");
   }
 
-  if (storing_period < 0) throw std::runtime_error("storing_period parameter value is not valid");
+  if (storing_period < 0) {
+    RCLCPP_WARN(this->get_logger(), "storing_period parameter value (%d) is not valid, treating as 0", storing_period);
+    storing_period = 0;
+  }
 
   if (!storing_period) {
     RCLCPP_INFO(
