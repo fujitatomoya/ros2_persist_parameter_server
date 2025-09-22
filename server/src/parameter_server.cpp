@@ -59,7 +59,12 @@ ParameterServer::ParameterServer(
       "Dynamic typing enabled. Read persistent parameters will be dynamically typed.");
   }
 
-  if (storing_period < 0) throw std::runtime_error("storing_period parameter value is not valid");
+  if (storing_period < 0) {
+    RCLCPP_WARN(
+      this->get_logger(),
+      "storing_period parameter value (%d) is not valid, treating as 0", storing_period);
+    storing_period = 0;
+  }
 
   if (!storing_period) {
     RCLCPP_INFO(
@@ -176,7 +181,9 @@ void ParameterServer::LoadYamlFile()
   // check whether yaml file exist
   if (!boost::filesystem::exists(persistent_yaml_file_))
   {
-    RCLCPP_WARN(this->get_logger(), "Custom YAML file %s not exist", persistent_yaml_file_.c_str());
+    RCLCPP_WARN(
+      this->get_logger(),
+      "Custom YAML file %s not exist", persistent_yaml_file_.c_str());
     return;
   }
 
@@ -263,7 +270,9 @@ void ParameterServer::LoadYamlFile()
           {
             if (!result.successful)
             {
-              RCLCPP_WARN(get_logger(), "Failed to set parameter: %s", result.reason.c_str());
+              RCLCPP_WARN(
+                get_logger(),
+                "Failed to set parameter: %s", result.reason.c_str());
             }
           }
         }
@@ -416,7 +425,9 @@ void ParameterServer::SaveNode(YAML::Emitter& out, YAML::Node node, const std::s
             break;
           }
           default: {
-            RCLCPP_WARN(this->get_logger(), "parameter %s unsupported type %d",
+            RCLCPP_WARN(
+              this->get_logger(),
+              "parameter %s unsupported type %d",
               name.c_str(), parameter.get_type());
             break;
           }
@@ -506,7 +517,9 @@ void ParameterServer::StoreYamlFile()
         {
           auto byte_array = parameter.as_byte_array();
           if (byte_array.size() == 0) {
-            RCLCPP_WARN(this->get_logger(), "parameter %s value is empty, it will not be stored", name.c_str());
+            RCLCPP_WARN(
+              this->get_logger(),
+              "parameter %s value is empty, it will not be stored", name.c_str());
             break;
           }
           YAML::Node seq;
@@ -523,7 +536,9 @@ void ParameterServer::StoreYamlFile()
         {
           auto bool_array = parameter.as_bool_array();
           if (bool_array.size() == 0) {
-            RCLCPP_WARN(this->get_logger(), "parameter %s value is empty, it will not be stored", name.c_str());
+            RCLCPP_WARN(
+              this->get_logger(),
+              "parameter %s value is empty, it will not be stored", name.c_str());
             break;
           }
           YAML::Node seq;
@@ -540,7 +555,9 @@ void ParameterServer::StoreYamlFile()
         {
           auto array = parameter.as_integer_array();
           if (array.size() == 0) {
-            RCLCPP_WARN(this->get_logger(), "parameter %s value is empty, it will not be stored", name.c_str());
+            RCLCPP_WARN(
+              this->get_logger(),
+              "parameter %s value is empty, it will not be stored", name.c_str());
             break;
           }
           YAML::Node seq;
@@ -556,7 +573,9 @@ void ParameterServer::StoreYamlFile()
         {
           auto array = parameter.as_double_array();
           if (array.size() == 0) {
-            RCLCPP_WARN(this->get_logger(), "parameter %s value is empty, it will not be stored", name.c_str());
+            RCLCPP_WARN(
+              this->get_logger(),
+              "parameter %s value is empty, it will not be stored", name.c_str());
             break;
           }
           YAML::Node seq;
@@ -572,7 +591,9 @@ void ParameterServer::StoreYamlFile()
         {
           auto array = parameter.as_string_array();
           if (array.size() == 0) {
-            RCLCPP_WARN(this->get_logger(), "parameter %s value is empty, it will not be stored", name.c_str());
+            RCLCPP_WARN(
+              this->get_logger(),
+              "parameter %s value is empty, it will not be stored", name.c_str());
             break;
           }
           YAML::Node seq;
@@ -586,7 +607,9 @@ void ParameterServer::StoreYamlFile()
         }
         default:
         {
-          RCLCPP_WARN(this->get_logger(), "parameter %s unsupported type %d",
+          RCLCPP_WARN(
+            this->get_logger(),
+            "parameter %s unsupported type %d",
             name.c_str(), parameter.get_type());
           break;
         }
