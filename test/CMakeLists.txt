@@ -35,6 +35,7 @@ add_executable(client_default
 )
 
 target_link_libraries(client_default
+  PUBLIC
   rclcpp::rclcpp
   rclcpp_components::component
   rcutils::rcutils
@@ -46,24 +47,23 @@ target_include_directories(client_default
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-ament_target_dependencies(client_default rclcpp rclcpp_components std_msgs rcutils)
-
 add_executable(client_with_node_options
   src/test_with_node_options.cpp
   src/persist_parameter_client.cpp
 )
 
 target_link_libraries(client_with_node_options
+  PUBLIC
   rclcpp::rclcpp
+  rclcpp_components::component
   rcutils::rcutils
+  ${std_msgs_TARGETS}
 )
 
 target_include_directories(client_with_node_options
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
-
-ament_target_dependencies(client_with_node_options rclcpp rclcpp_components std_msgs rcutils)
 
 install(TARGETS client_default client_with_node_options DESTINATION lib/${PROJECT_NAME})
 
