@@ -106,6 +106,20 @@ int main(int argc, char ** argv)
         "some_int", "Not possible", "l. Test could not change the type of parameter");
     }
 
+    /*
+    * Test: Modifying parameters the same as above but saving the file and then checking. 
+    */
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Change the value of parameter to `Hello` : ");
+      test_client->do_save_and_check<std::string>("persistent.test_saved_first", "Hello", "m. Set and saved new parameter successfully");
+      RCLCPP_INFO(test_client->get_logger(), "Add a new parameter to parameter file : ");
+      test_client->do_save_and_check<std::string>("persistent.test_saved_second", "SecondString", "n. Set and saved new parameter successfully");
+      RCLCPP_INFO(test_client->get_logger(), "Update and save a parameter and make sure it saved successfully : ");
+      test_client->do_save_and_check<std::string>("persistent.test_saved_first", "World", "o. Set and saved existing parameter successfully");
+      RCLCPP_INFO(test_client->get_logger(), "Update a parameter and reload without saving : ");
+      test_client->do_reload_and_check<std::string>("persistent.test_saved_second", "Discarded", "SecondString", "p. Set and saved new parameter successfully");
+    }
+
   } catch (const rclcpp::exceptions::RCLError & e) {
     ret_code = -1;
     RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());

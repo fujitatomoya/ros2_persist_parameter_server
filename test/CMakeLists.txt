@@ -27,6 +27,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(rmw REQUIRED)
 
 add_executable(client_default
@@ -40,6 +41,7 @@ target_link_libraries(client_default
   rclcpp_components::component
   rcutils::rcutils
   ${std_msgs_TARGETS}
+  ${std_srvs_TARGETS}
 )
 
 target_include_directories(client_default
@@ -58,6 +60,7 @@ target_link_libraries(client_with_node_options
   rclcpp_components::component
   rcutils::rcutils
   ${std_msgs_TARGETS}
+  ${std_srvs_TARGETS}
 )
 
 target_include_directories(client_with_node_options

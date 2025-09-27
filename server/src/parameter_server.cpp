@@ -71,7 +71,11 @@ ParameterServer::ParameterServer(
       this->get_logger(), "Period is 0. Will not perform periodic persistent parameter storing");
   } else {
     timer_ = this->create_wall_timer(
-      std::chrono::seconds(storing_period), std::bind(&ParameterServer::StoreYamlFile, this));
+      std::chrono::seconds(storing_period), 
+      [this]{ 
+        StoreYamlFile(); 
+      }
+    );
 
     RCLCPP_INFO(
       this->get_logger(), "Will perform periodic persistent parameter storing every %ds",
@@ -97,6 +101,40 @@ ParameterServer::ParameterServer(
     };
   // callback_handler_ needs to be alive to keep the callback functional
   callback_handler_ = this->add_on_set_parameters_callback(param_change_callback);
+
+  save_trigger_ = this->create_service<std_srvs::srv::Trigger>("~/save_params",
+    [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr& req,
+      [[maybe_unused]] const std_srvs::srv::Trigger::Response::SharedPtr& res
+    ) {
+      RCLCPP_INFO(this->get_logger(), "Parameter save manually requested");
+      try {
+        this->StoreYamlFile();
+        res->success = true;
+        res->message = "Parameters saved successfully";
+      } catch(const std::exception& ex) {
+        std::ostringstream ss;
+        ss << "Parameters could not be saved. Error: " << ex.what();
+        res->success = false;
+        res->message = ss.str();
+      }
+  });
+
+  reload_trigger_ = this->create_service<std_srvs::srv::Trigger>("~/reload_params",
+    [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr& req,
+      [[maybe_unused]] const std_srvs::srv::Trigger::Response::SharedPtr& res
+    ) {
+      RCLCPP_INFO(this->get_logger(), "Parameter reload manually requested");
+      try {
+        this->LoadYamlFile();
+        res->success = true;
+        res->message = "Parameters reloaded";
+      } catch(const std::exception& ex) {
+        std::ostringstream ss;
+        ss << "Parameters could not be reloaded. Error: " << ex.what();
+        res->success = false;
+        res->message = ss.str();
+      }
+  });
 
   LoadYamlFile();
 }
@@ -129,13 +167,17 @@ void ParameterServer::ValidateYamlFile(YAML::Node node, const std::string& key) 
 }
 
 void ParameterServer::CheckYamlFile() {
+  CheckYamlFile(persistent_yaml_file_);
+}
+
+void ParameterServer::CheckYamlFile(const std::string& file) {
   RCLCPP_DEBUG(this->get_logger(), "%s", __PRETTY_FUNCTION__);
-  YAML::Node parameter_config = YAML::LoadFile(persistent_yaml_file_);
+  YAML::Node parameter_config = YAML::LoadFile(file);
   // check format "YAML must be dictionary type and level 1 can only have one key"
   if ((parameter_config.size() == 1 && parameter_config.Type() != YAML::NodeType::Map) ||
       parameter_config.size() > 1) {
     std::ostringstream ss;
-    ss << "Custom YAML file '" << persistent_yaml_file_ << " format is invalid. [YAML must be dictionary type and level 1 can only have one key]";
+    ss << "Custom YAML file '" << file << " format is invalid. [YAML must be dictionary type and level 1 can only have one key]";
     throw std::runtime_error(ss.str());
   }
 
@@ -165,7 +207,7 @@ void ParameterServer::CheckYamlFile() {
 
     if (!parameter_use_stars_ && !parameter_ns_exist_ && !parameter_name_exist_) {
       std::ostringstream ss;
-      ss << "Custom YAML file '" << persistent_yaml_file_
+      ss << "Custom YAML file '" << file
         << " content is invalid. [namespace can be optional or '" << get_namespace() << "', but node name must be exist with a concrete name'"
         << get_name() << "' or '/**']";
       throw std::runtime_error(ss.str());
