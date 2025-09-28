@@ -132,6 +132,11 @@ all of the configuration options will be passed via arguments as following.
     </tbody>
 </table>
 
+### Services
+
+- `~/reload_params`: Reloads the parameters from the configuration file. This service allows dynamic reconfiguration of the node without requiring a restart. When called, the parameter server will reload the parameter values and apply them to the current operation.
+- `~/save_params`: Saves the current persistent parameter values to persistent storage (typically a configuration file). This service ensures that parameter changes made during runtime are preserved and will be available after node restart or system reboot.
+
 ## Sequence
 
 1. parameter server is initialized via __params:=<xxx.yaml>
@@ -149,12 +154,14 @@ Tutorial Video is provided by [The Construct Robotics Institute](https://www.the
 
 [<img src="https://img.youtube.com/vi/1xYjYd3wTKo/maxresdefault.jpg" width="250"/>](https://www.youtube.com/watch?v=1xYjYd3wTKo)
 
-### Supported Distribution
+### [Supported Distribution](https://docs.ros.org/en/rolling/Releases.html)
 
-- [ROS 2 Rolling Ridley](https://docs.ros.org/en/rolling/index.html)
-- [ROS 2 Kilted Kaiju](https://docs.ros.org/en/kilted/index.html)
-- [ROS 2 Jazzy Jalisco](https://docs.ros.org/en/jazzy/index.html)
-- [ROS 2 Humble Hawksbill](https://docs.ros.org/en/humble/index.html)
+| Distribution      | Supported |
+| :---------------- | :-------- |
+| Rolling Ridley    |    ✅    |
+| Kilted Kaiju      |    ✅    |
+| Jazzy Jalisco     |    ✅    |
+| Humble Hawksbill  |    ✅    |
 
 #### Docker Container
 
@@ -206,7 +213,7 @@ to install local colcon workspace,
    Set parameter successful
    # ros2 param set /parameter_server persistent.pi 3.14159265359
    Set parameter successful
-   # ros2 param set /parameter_server persistent.some_lists.some_integers 81,82,83,84
+   # ros2 param set /parameter_server persistent.some_lists.some_integers "[81, 82, 83, 84]"
    Set parameter successful
    ```
 
