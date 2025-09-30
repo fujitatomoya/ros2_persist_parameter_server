@@ -13,14 +13,14 @@ import time
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 sleep_time = 3
-launchServerCmd = ['ros2', 'launch', 'ros2_persistent_parameter_server_test', 'test.launch.py']
+launchServerCmd = ['ros2', 'launch', 'persist_parameter_server', 'test.launch.py']
 launchClientCmd = ['ros2', 'run',
-                   'ros2_persistent_parameter_server_test', 'client_default']
+                   'persist_parameter_server', 'client_default']
 
 launchServerCmdWithNodeOptions = [
-    'ros2', 'launch', 'ros2_persistent_parameter_server_test', 'test.launch.py', 'allow_dynamic_typing:=true']
+    'ros2', 'launch', 'persist_parameter_server', 'test.launch.py', 'allow_dynamic_typing:=true']
 launchClientCmdWithNodeOptions = [
-    'ros2', 'run', 'ros2_persistent_parameter_server_test', 'client_with_node_options']
+    'ros2', 'run', 'persist_parameter_server', 'client_with_node_options']
 
 if shutil.which('ros2') is None:
     print("source <colcon_ws>/install/setup.bash...then retry.")

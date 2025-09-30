@@ -49,7 +49,7 @@ function build_parameter_server () {
     echo "[${FUNCNAME[0]}]: build ROS 2 parameter server."
     source /opt/ros/${ROS_DISTRO}/setup.bash
     cd ${COLCON_WORKSPACE}
-    colcon build --symlink-install --packages-select parameter_server ros2_persistent_parameter_server_test
+    colcon build --symlink-install --packages-select persist_parameter_server --cmake-args -D CLIENT_TEST_DEMO=ON
 }
 
 function test_parameter_server () {

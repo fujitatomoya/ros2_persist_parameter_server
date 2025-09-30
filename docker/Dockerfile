@@ -40,7 +40,7 @@ RUN apt-get update \
 # Build and source colcon workspace
 RUN cd $COLCON_WS \
     && source /opt/ros/$ROS_DISTRO/setup.bash \
-    && colcon build --symlink-install --packages-select parameter_server
+    && colcon build --symlink-install --packages-select persist_parameter_server
 
 # Add source environment in .bashrc
 RUN echo -n -e "\n" >> /root/.bashrc
