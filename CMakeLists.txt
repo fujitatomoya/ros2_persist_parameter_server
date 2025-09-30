@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(parameter_server VERSION 1.0.1)
+project(persist_parameter_server VERSION 1.0.1)
 
 # Set Release build if no build type was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -33,9 +33,11 @@ find_package(rmw REQUIRED)
 find_package(Boost REQUIRED COMPONENTS program_options filesystem)
 find_package(yaml_cpp_vendor REQUIRED)
 
+option(CLIENT_TEST_DEMO "Build client test demo" OFF)
+
 add_executable(server
- src/parameter_server.cpp
- src/main.cpp
+ server/src/parameter_server.cpp
+ server/src/main.cpp
 )
 
 # yaml-cpp updates CMake thing significantly on v0.8.0 or later.
@@ -69,16 +71,65 @@ endif()
 
 target_include_directories(server
   PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/server/include>
 )
 
 install(TARGETS server DESTINATION lib/${PROJECT_NAME})
 
 # Install launch files.
 install(DIRECTORY
-  launch
-  param
+  server/launch
+  server/param
   DESTINATION share/${PROJECT_NAME}/
 )
+
+# Build client test demo
+if (CLIENT_TEST_DEMO)
+add_executable(client_default
+  test/src/test_default.cpp
+  test/src/persist_parameter_client.cpp
+)
+
+target_link_libraries(client_default
+  PUBLIC
+  rclcpp::rclcpp
+  rclcpp_components::component
+  rcutils::rcutils
+  ${std_msgs_TARGETS}
+  ${std_srvs_TARGETS}
+)
+
+target_include_directories(client_default
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test/include>
+)
+
+add_executable(client_with_node_options
+  test/src/test_with_node_options.cpp
+  test/src/persist_parameter_client.cpp
+)
+
+target_link_libraries(client_with_node_options
+  PUBLIC
+  rclcpp::rclcpp
+  rclcpp_components::component
+  rcutils::rcutils
+  ${std_msgs_TARGETS}
+  ${std_srvs_TARGETS}
+)
+
+target_include_directories(client_with_node_options
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test/include>
+)
+
+install(TARGETS client_default client_with_node_options DESTINATION lib/${PROJECT_NAME})
+
+# Install launch files.
+install(DIRECTORY
+  test/launch
+  DESTINATION share/${PROJECT_NAME}/
+)
+endif()
 
 ament_package()
