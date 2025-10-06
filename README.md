@@ -16,6 +16,7 @@ See [overview slide deck](https://raw.githack.com/fujitatomoya/ros2_persist_para
       - [Persistent Prefix](#persistent-prefix)
       - [Scope Overview](#scope-overview)
     - [Configurable Options](#configurable-options)
+    - [Services](#services)
   - [Sequence](#sequence)
   - [Getting Started](#getting-started)
     - [Supported Distribution](#supported-distribution)
@@ -73,12 +74,19 @@ parameter server has the following scope for persistent parameter. since paramet
 ### Configurable Options
 
 - Node Name
+
   Since ROS 2 parameter is owned by node, node name will be needed to access the parameters, this is designed to clarify semantics for the parameters and owners. Node name will be "parameter_server" if node name is not specifies. so the other nodes can use "parameter_server" as well to access in the same system Parameter Server. If there must exist multiple parameter servers, these parameter servers need to specify a different node name, such as "parameter_server_[special_string]", please notice that ROS 2 node name can only contains alphanumerics and '_'.
+
 - Persistent Volume
+
   Definition of "Persistent" is different from user and use cases, so it should be configurable to set the path to store the persistent --file-path FILE_PATH parameter. Expecting if the parameter's lifespan is system boot, path would be "/tmp" because user wants a fresh start via reboot. Or maybe physical persistent volume is chosen if users want to keep the parameter into the hardware storage. At the initialization time, Parameter Server will load the parameters from the storage which is specified by user.
+
 - Storing Period
+
   It sets the interval for periodically saving parameters to the file system, and that setting the value to 0 disables periodic storing.
+
 - Node Options
+
   there are three important options:
   - allow_undeclared_parameters: (default true)
   - automatically_declare_parameters_from_overrides: (default true)
@@ -156,12 +164,12 @@ Tutorial Video is provided by [The Construct Robotics Institute](https://www.the
 
 ### [Supported Distribution](https://docs.ros.org/en/rolling/Releases.html)
 
-| Distribution      | Supported |
-| :---------------- | :-------- |
-| Rolling Ridley    |    ✅    |
-| Kilted Kaiju      |    ✅    |
-| Jazzy Jalisco     |    ✅    |
-| Humble Hawksbill  |    ✅    |
+| Distribution      | Supported | Comment |
+| :---------------- | :-------- | :--- |
+| Rolling Ridley    |    ✅    | Default branch, used for all distribution |
+| Kilted Kaiju      |    ✅    |   |
+| Jazzy Jalisco     |    ✅    |   |
+| Humble Hawksbill  |    ✅    |   |
 
 #### Docker Container
 
