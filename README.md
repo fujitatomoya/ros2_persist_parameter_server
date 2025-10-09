@@ -187,62 +187,62 @@ apt install libyaml-cpp-dev libboost-program-options-dev libboost-filesystem-dev
 
 ### Prerequisites
 
-ros2 source build environment([Linux-Development-Setup/](https://index.ros.org/doc/ros2/Installation/Rolling/Linux-Development-Setup/)) is required to build and run the parameter server.
+[ROS 2 source build environment](https://index.ros.org/doc/ros2/Installation/Rolling/Linux-Development-Setup) is required to build and run the parameter server.
 
 ### Build
 
-to install local colcon workspace,
+Install local colcon workspace,
 
-```bash
-# cd <colcon_workspace>/src
-# git clone https://github.com/fujitatomoya/ros2_persist_parameter_server
-# cd <colcon_workspace>
-# colcon build --symlink-install --packages-select parameter_server ros2_persistent_parameter_server_test
-# source install/local_setup.bash
+```console
+$ cd <colcon_workspace>/src
+$ git clone https://github.com/fujitatomoya/ros2_persist_parameter_server
+$ cd <colcon_workspace>
+$ colcon build --symlink-install --packages-select parameter_server ros2_persistent_parameter_server_test
+$ source install/local_setup.bash
 ```
 
 ### Run
 
 1. start parameter server.
 
-   ```bash
-   # cp <colcon_workspace>/src/ros2_persist_parameter_server/server/param/parameter_server.yaml /tmp/
-   # ros2 run parameter_server server
+   ```console
+   $ cp <colcon_workspace>/src/ros2_persist_parameter_server/server/param/parameter_server.yaml /tmp/
+   $ ros2 run parameter_server server
    [INFO] [parameter_server]: Parameter Server node named: '/parameter_server' started and ready, and serving '9' parameters already!
    ...<snip>
    ```
 
 2. update persistent parameter.
 
-   ```bash
-   # ros2 param set /parameter_server persistent.some_int 81
+   ```console
+   $ ros2 param set /parameter_server persistent.some_int 81
    Set parameter successful
-   # ros2 param set /parameter_server persistent.a_string Konnichiwa
+   $ ros2 param set /parameter_server persistent.a_string Konnichiwa
    Set parameter successful
-   # ros2 param set /parameter_server persistent.pi 3.14159265359
+   $ ros2 param set /parameter_server persistent.pi 3.14159265359
    Set parameter successful
-   # ros2 param set /parameter_server persistent.some_lists.some_integers "[81, 82, 83, 84]"
+   $ ros2 param set /parameter_server persistent.some_lists.some_integers "[81, 82, 83, 84]"
    Set parameter successful
    ```
 
 3. restart parameter server.
 
-   ```bash
-   # ros2 run parameter_server server
+   ```console
+   $ ros2 run parameter_server server
    [INFO] [parameter_server]: Parameter Server node named: '/parameter_server' started and ready, and serving '9' parameters already!
    ...<snip>
    ```
 
 4. check persistent parameter is precisely cached and loaded into parameter server.
 
-   ```bash
-   # ros2 param get /parameter_server persistent.a_string
+   ```console
+   $ ros2 param get /parameter_server persistent.a_string
    String value is: Konnichiwa
-   # ros2 param get /parameter_server persistent.pi
+   $ ros2 param get /parameter_server persistent.pi
    Double value is: 3.14159265359
-   # ros2 param get /parameter_server persistent.some_int
+   $ ros2 param get /parameter_server persistent.some_int
    Integer value is: 81
-   # ros2 param get /parameter_server persistent.some_lists.some_integers
+   $ ros2 param get /parameter_server persistent.some_lists.some_integers
    String value is: 81,82,83,84
    ```
 
@@ -264,7 +264,7 @@ These samples verify the following functions.
 make sure to add the path of `launch` package to the PATH environment.
 
 ```bash
-# source <launch_workspace>/install/setup.bash
+source <launch_workspace>/install/setup.bash
 ```
 
 ### Run
@@ -273,19 +273,21 @@ make sure to add the path of `launch` package to the PATH environment.
 
 [test.py](./test/test.py) will call [test.launch.py](./test/launch/test.launch.py) file to start persistent parameter server and the test client, it also creates a thread to kill parameter server after specified time. All function tests are finished in client.
 
-!!!NOTE The test script will load the yaml file that should existed in `/tmp/test`, therefore, before executing test demo, you need to copy the yaml file existing in `server` directory to `/tmp/test`.
+> [!NOTE]
+> The test script will load the yaml file that should existed in `/tmp/test`, therefore, before executing test demo, you need to copy the yaml file existing in `server` directory to `/tmp/test`.
 
 ```bash
-# mkdir -p /tmp/test
-# cp <colcon_workspace>/src/ros2_persist_parameter/server/param/parameter_server.yaml /tmp/test
-# ./<colcon_workspace>/src/ros2_persist_parameter/test/test.py
+mkdir -p /tmp/test
+cp <colcon_workspace>/src/ros2_persist_parameter/server/param/parameter_server.yaml /tmp/test
+./<colcon_workspace>/src/ros2_persist_parameter/test/test.py
 ```
 
 All of the test is listed with result as following
 
-!!!NOTE Client has a 5-seconds sleep during server restarts.
+> [!NOTE]
+> Client has a 5-seconds sleep during server restarts.
 
-```bash
+```console
 ......   // omit some output logs
 
 [ros2-2] [INFO] [1601447662.145760479] [client]: ***************************************************************************
@@ -327,7 +329,7 @@ The process completed successfully.
 
 ## Authors
 
-- **Tomoya Fujita** --- Tomoya.Fujita@sony.com
+- **Tomoya Fujita** --- Tomoya.Fujita@sony.com / tomoya.fujita825@gmail.com
 
 ## License
 
