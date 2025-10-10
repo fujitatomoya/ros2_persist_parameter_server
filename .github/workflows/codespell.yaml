@@ -1,6 +1,10 @@
 name: codespell
 
-on: pull_request
+on:
+  pull_request:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   spellcheck:

@@ -16,6 +16,7 @@ See [overview slide deck](https://raw.githack.com/fujitatomoya/ros2_persist_para
       - [Persistent Prefix](#persistent-prefix)
       - [Scope Overview](#scope-overview)
     - [Configurable Options](#configurable-options)
+    - [Services](#services)
   - [Sequence](#sequence)
   - [Getting Started](#getting-started)
     - [Supported Distribution](#supported-distribution)
@@ -73,12 +74,19 @@ parameter server has the following scope for persistent parameter. since paramet
 ### Configurable Options
 
 - Node Name
+
   Since ROS 2 parameter is owned by node, node name will be needed to access the parameters, this is designed to clarify semantics for the parameters and owners. Node name will be "parameter_server" if node name is not specifies. so the other nodes can use "parameter_server" as well to access in the same system Parameter Server. If there must exist multiple parameter servers, these parameter servers need to specify a different node name, such as "parameter_server_[special_string]", please notice that ROS 2 node name can only contains alphanumerics and '_'.
+
 - Persistent Volume
+
   Definition of "Persistent" is different from user and use cases, so it should be configurable to set the path to store the persistent --file-path FILE_PATH parameter. Expecting if the parameter's lifespan is system boot, path would be "/tmp" because user wants a fresh start via reboot. Or maybe physical persistent volume is chosen if users want to keep the parameter into the hardware storage. At the initialization time, Parameter Server will load the parameters from the storage which is specified by user.
+
 - Storing Period
+
   It sets the interval for periodically saving parameters to the file system, and that setting the value to 0 disables periodic storing.
+
 - Node Options
+
   there are three important options:
   - allow_undeclared_parameters: (default true)
   - automatically_declare_parameters_from_overrides: (default true)
@@ -156,12 +164,12 @@ Tutorial Video is provided by [The Construct Robotics Institute](https://www.the
 
 ### [Supported Distribution](https://docs.ros.org/en/rolling/Releases.html)
 
-| Distribution      | Supported |
-| :---------------- | :-------- |
-| Rolling Ridley    |    ✅    |
-| Kilted Kaiju      |    ✅    |
-| Jazzy Jalisco     |    ✅    |
-| Humble Hawksbill  |    ✅    |
+| Distribution      | Supported | Comment |
+| :---------------- | :-------- | :--- |
+| Rolling Ridley    |    ✅    | Default branch, used for all distribution |
+| Kilted Kaiju      |    ✅    |   |
+| Jazzy Jalisco     |    ✅    |   |
+| Humble Hawksbill  |    ✅    |   |
 
 #### Docker Container
 
@@ -179,11 +187,11 @@ apt install libyaml-cpp-dev libboost-program-options-dev libboost-filesystem-dev
 
 ### Prerequisites
 
-ros2 source build environment([Linux-Development-Setup/](https://index.ros.org/doc/ros2/Installation/Rolling/Linux-Development-Setup/)) is required to build and run the parameter server.
+[ROS 2 source build environment](https://index.ros.org/doc/ros2/Installation/Rolling/Linux-Development-Setup) is required to build and run the parameter server.
 
 ### Build
 
-to install local colcon workspace,
+Install local colcon workspace,
 
 ```bash
 # cd <colcon_workspace>/src
@@ -206,14 +214,14 @@ to install local colcon workspace,
 
 2. update persistent parameter.
 
-   ```bash
-   # ros2 param set /parameter_server persistent.some_int 81
+   ```console
+   $ ros2 param set /parameter_server persistent.some_int 81
    Set parameter successful
-   # ros2 param set /parameter_server persistent.a_string Konnichiwa
+   $ ros2 param set /parameter_server persistent.a_string Konnichiwa
    Set parameter successful
-   # ros2 param set /parameter_server persistent.pi 3.14159265359
+   $ ros2 param set /parameter_server persistent.pi 3.14159265359
    Set parameter successful
-   # ros2 param set /parameter_server persistent.some_lists.some_integers "[81, 82, 83, 84]"
+   $ ros2 param set /parameter_server persistent.some_lists.some_integers "[81, 82, 83, 84]"
    Set parameter successful
    ```
 
@@ -227,14 +235,14 @@ to install local colcon workspace,
 
 4. check persistent parameter is precisely cached and loaded into parameter server.
 
-   ```bash
-   # ros2 param get /parameter_server persistent.a_string
+   ```console
+   $ ros2 param get /parameter_server persistent.a_string
    String value is: Konnichiwa
-   # ros2 param get /parameter_server persistent.pi
+   $ ros2 param get /parameter_server persistent.pi
    Double value is: 3.14159265359
-   # ros2 param get /parameter_server persistent.some_int
+   $ ros2 param get /parameter_server persistent.some_int
    Integer value is: 81
-   # ros2 param get /parameter_server persistent.some_lists.some_integers
+   $ ros2 param get /parameter_server persistent.some_lists.some_integers
    String value is: 81,82,83,84
    ```
 
@@ -256,7 +264,7 @@ These samples verify the following functions.
 make sure to add the path of `launch` package to the PATH environment.
 
 ```bash
-# source <launch_workspace>/install/setup.bash
+source <launch_workspace>/install/setup.bash
 ```
 
 ### Run
@@ -265,19 +273,21 @@ make sure to add the path of `launch` package to the PATH environment.
 
 [test.py](./test/test.py) will call [test.launch.py](./test/launch/test.launch.py) file to start persistent parameter server and the test client, it also creates a thread to kill parameter server after specified time. All function tests are finished in client.
 
-!!!NOTE The test script will load the yaml file that should existed in `/tmp/test`, therefore, before executing test demo, you need to copy the yaml file existing in `server` directory to `/tmp/test`.
+> [!NOTE]
+> The test script will load the yaml file that should existed in `/tmp/test`, therefore, before executing test demo, you need to copy the yaml file existing in `server` directory to `/tmp/test`.
 
 ```bash
-# mkdir -p /tmp/test
-# cp <colcon_workspace>/src/ros2_persist_parameter/server/param/parameter_server.yaml /tmp/test
-# ./<colcon_workspace>/src/ros2_persist_parameter/test/test.py
+mkdir -p /tmp/test
+cp <colcon_workspace>/src/ros2_persist_parameter/server/param/parameter_server.yaml /tmp/test
+./<colcon_workspace>/src/ros2_persist_parameter/test/test.py
 ```
 
 All of the test is listed with result as following
 
-!!!NOTE Client has a 5-seconds sleep during server restarts.
+> [!NOTE]
+> Client has a 5-seconds sleep during server restarts.
 
-```bash
+```console
 ......   // omit some output logs
 
 [ros2-2] [INFO] [1601447662.145760479] [client]: ***************************************************************************
@@ -319,7 +329,7 @@ The process completed successfully.
 
 ## Authors
 
-- **Tomoya Fujita** --- Tomoya.Fujita@sony.com
+- **Tomoya Fujita** --- Tomoya.Fujita@sony.com / tomoya.fujita825@gmail.com
 
 ## License
 
