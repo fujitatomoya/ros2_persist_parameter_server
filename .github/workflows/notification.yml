@@ -1,0 +1,98 @@
+name: Notifications
+
+on:
+  # Trigger for Auto-Merge Start (when PR enters the queue)
+  merge_group:
+    types: [checks_requested]
+
+  # Trigger for Merge Outcome (when PR is closed/merged)
+  pull_request:
+    types: [closed]
+
+jobs:
+  # -----------------------------------------------------------------
+  # Notify Auto-Merge Start
+  # Triggered by 'merge_group: checks_requested'
+  # -----------------------------------------------------------------
+  notify_automerge_start:
+    # Only run this job if the trigger was the 'merge_group' event
+    if: github.event_name == 'merge_group'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: read
+    steps:
+      - name: Auto-Merge Validation Started
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const targetBranch = context.payload.merge_group.base_ref;
+            const actor = context.actor;
+
+            github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🤖 **Auto-Merge Validation Started** 🤖
+                     Hi! @${actor} has added this Pull Request to the **Merge Queue** targeting the \`${targetBranch}\` branch.
+                     All required maintainer reviews are complete. The final combined CI checks are now running.
+                     I will notify you again when the merge is complete or if it fails.`
+            });
+
+  # -----------------------------------------------------------------
+  # Notify Merge Outcome
+  # Triggered by 'pull_request: closed'
+  # -----------------------------------------------------------------
+  notify_merge_outcome:
+    # Only run this job if the trigger was the 'pull_request' event
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: read
+    steps:
+      # --- Case: Merge Succeeded ---
+      - name: Merge Succeeded
+        if: github.event.pull_request.merged == true
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const mergeCommitSha = context.payload.pull_request.merge_commit_sha;
+
+            github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ **Merge Succeeded!** ✅
+                     This Pull Request was successfully merged into \`${context.payload.pull_request.base.ref}\` with commit \`${mergeCommitSha.substring(0, 7)}\`.
+                     All work is complete. Developers, please proceed with any necessary follow-up tasks (e.g., closing linked issues).`
+            });
+
+      # --- Case: Merge Failed or PR Closed Manually ---
+      - name: Merge Failed or PR Closed Manually
+        if: github.event.pull_request.merged == false
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const actor = context.actor;
+            const title = context.payload.pull_request.title;
+
+            let body = `❌ **Merge Validation Failed / PR Closed** ❌\n\n`;
+
+            if (context.payload.pull_request.auto_merge) {
+               // This implies auto_merge was active but failed (e.g., CI check failure in the queue).
+               body += `This Pull Request (\`${title}\`) was **removed from the Merge Queue** due to a failed status check, or was closed manually while in the queue.\n\n**Action Required:** Developer, please review the latest CI status checks for errors and push a fix.`;
+            } else {
+               // This is a manual close without merging.
+               body += `This Pull Request was closed by @${actor} without being merged. No further action needed unless it needs to be reopened.`;
+            }
+
+            github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
