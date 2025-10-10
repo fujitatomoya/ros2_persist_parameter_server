@@ -28,7 +28,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             launch_ros.actions.Node(
-                package="parameter_server",
+                package="persist_parameter_server",
                 executable="server",
                 output="screen",
                 # respawn in 5.0 seconds

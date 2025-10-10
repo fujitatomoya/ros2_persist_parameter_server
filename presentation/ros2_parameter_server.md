@@ -54,7 +54,7 @@ Comment Here
 
 ```console
 $ docker run -it tomoyafujita/ros2_param_server:rolling /bin/bash
-root@bf4d904e3800:~/colcon_ws# ros2 run parameter_server server
+root@bf4d904e3800:~/colcon_ws# ros2 run persist_parameter_server server
 ```
 
 - Kubernetes

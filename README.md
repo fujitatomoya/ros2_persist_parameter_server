@@ -68,7 +68,7 @@ parameter server has the following scope for persistent parameter. since paramet
 |  Persistent Parameter File  |  YES  | parameter server dedicated argument to specify the file to load as parameters. in addition, all of the persistent parameters will be stored into this file during shutdown.<br> e.g) --file-path /tmp/parameter_server.yaml |
 |  Parameter Arguments  |  NO  |  e.g) --ros-args -p persistent.some_int:=42<br>some_int cannot be registered as persistent parameter, since this cannot be notified via **/parameter_events** to parameter server.  |
 |  Parameter File Arguments  |  NO  |  e.g) --ros-args --params-file ./parameters_via_cli.yaml<br>same with parameter arguments, cannot be registered as persistent parameter, since these cannot be notified via **/parameter_events**  to parameter server. |
-|  Launch Parameter  |  NO  |  e.g) ros2 launch parameter_server parameter_server.launch.py<br>same with parameter arguments, cannot be registered as persistent parameter, since these cannot be notified via **/parameter_events**  to parameter server.  |
+|  Launch Parameter  |  NO  |  e.g) ros2 launch persist_parameter_server parameter_server.launch.py<br>same with parameter arguments, cannot be registered as persistent parameter, since these cannot be notified via **/parameter_events**  to parameter server.  |
 
 ### Configurable Options
 
@@ -189,7 +189,7 @@ to install local colcon workspace,
 # cd <colcon_workspace>/src
 # git clone https://github.com/fujitatomoya/ros2_persist_parameter_server
 # cd <colcon_workspace>
-# colcon build --symlink-install --packages-select parameter_server ros2_persistent_parameter_server_test
+# colcon build --symlink-install --packages-select persist_parameter_server --cmake-args -D CLIENT_TEST_DEMO=ON
 # source install/local_setup.bash
 ```
 
@@ -199,7 +199,7 @@ to install local colcon workspace,
 
    ```bash
    # cp <colcon_workspace>/src/ros2_persist_parameter_server/server/param/parameter_server.yaml /tmp/
-   # ros2 run parameter_server server
+   # ros2 run persist_parameter_server server
    [INFO] [parameter_server]: Parameter Server node named: '/parameter_server' started and ready, and serving '9' parameters already!
    ...<snip>
    ```
@@ -220,7 +220,7 @@ to install local colcon workspace,
 3. restart parameter server.
 
    ```bash
-   # ros2 run parameter_server server
+   # ros2 run persist_parameter_server server
    [INFO] [parameter_server]: Parameter Server node named: '/parameter_server' started and ready, and serving '9' parameters already!
    ...<snip>
    ```
