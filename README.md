@@ -330,6 +330,7 @@ The process completed successfully.
 ## Authors
 
 - **Tomoya Fujita** --- Tomoya.Fujita@sony.com / tomoya.fujita825@gmail.com
+- **Barry Xu** --- Barry.Xu@sony.com
 
 ## License
 
