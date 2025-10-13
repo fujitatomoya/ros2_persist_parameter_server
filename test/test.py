@@ -34,7 +34,7 @@ def kill_server():
         for process in psutil.process_iter():
             if process.name() == program_name:
                 path = psutil.Process(process.pid)
-                if "install/persist_parameter_server/lib/persist_parameter_server" or "persist_parameter_server/server" in path.exe():
+                if "install/persist_parameter_server/lib/persist_parameter_server" in path.exe() or "persist_parameter_server/server" in path.exe():
                     os.kill(int(process.pid), signal.SIGINT)
                     print("parameter server is killed successfully")
                     break
