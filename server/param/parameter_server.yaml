@@ -1,7 +1,7 @@
 /**:
     ros__parameters:
         # This file is expected to be used as following,
-        # > ros2 run parameter_server server --file-path /tmp/parameter_server.yaml
+        # > ros2 run persist_parameter_server server --file-path /tmp/parameter_server.yaml
         #
         # Not persistent parameter.
         # These just will be loaded as normal parameters.

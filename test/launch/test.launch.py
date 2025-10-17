@@ -29,7 +29,7 @@ def generate_launch_description():
         allow_dynamic_typing_arg,
         ExecuteProcess(
             cmd=[
-                'ros2', 'run', 'parameter_server', 'server',
+                'ros2', 'run', 'persist_parameter_server', 'server',
                 '--file-path', '/tmp/test/parameter_server.yaml',
                 '--allow-dynamic-typing', LaunchConfiguration(
                     'allow_dynamic_typing')

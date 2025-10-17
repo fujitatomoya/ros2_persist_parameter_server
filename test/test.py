@@ -13,14 +13,14 @@ import time
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 sleep_time = 3
-launchServerCmd = ['ros2', 'launch', 'ros2_persistent_parameter_server_test', 'test.launch.py']
+launchServerCmd = ['ros2', 'launch', 'persist_parameter_server', 'test.launch.py']
 launchClientCmd = ['ros2', 'run',
-                   'ros2_persistent_parameter_server_test', 'client_default']
+                   'persist_parameter_server', 'client_default']
 
 launchServerCmdWithNodeOptions = [
-    'ros2', 'launch', 'ros2_persistent_parameter_server_test', 'test.launch.py', 'allow_dynamic_typing:=true']
+    'ros2', 'launch', 'persist_parameter_server', 'test.launch.py', 'allow_dynamic_typing:=true']
 launchClientCmdWithNodeOptions = [
-    'ros2', 'run', 'ros2_persistent_parameter_server_test', 'client_with_node_options']
+    'ros2', 'run', 'persist_parameter_server', 'client_with_node_options']
 
 if shutil.which('ros2') is None:
     print("source <colcon_ws>/install/setup.bash...then retry.")
@@ -34,7 +34,7 @@ def kill_server():
         for process in psutil.process_iter():
             if process.name() == program_name:
                 path = psutil.Process(process.pid)
-                if "install/parameter_server/lib/parameter_server" or "parameter_server/server" in path.exe():
+                if "install/persist_parameter_server/lib/persist_parameter_server" in path.exe() or "persist_parameter_server/server" in path.exe():
                     os.kill(int(process.pid), signal.SIGINT)
                     print("parameter server is killed successfully")
                     break
