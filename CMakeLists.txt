@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(persist_parameter_server VERSION 1.0.1)
+project(persist_parameter_server)
 
 # Set Release build if no build type was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
