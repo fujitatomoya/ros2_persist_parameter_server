@@ -2,6 +2,11 @@
 Changelog for package persist_parameter_server
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* update pdf and html presentation slides.
+* Contributors: Tomoya Fujita
+
 1.0.2 (2025-10-21)
 ------------------
 * Update package name in script and document
