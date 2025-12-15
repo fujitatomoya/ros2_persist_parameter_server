@@ -187,7 +187,7 @@ apt install libyaml-cpp-dev libboost-program-options-dev libboost-filesystem-dev
 
 ### Prerequisites
 
-[ROS 2 source build environment](https://index.ros.org/doc/ros2/Installation/Rolling/Linux-Development-Setup) is required to build and run the parameter server.
+[ROS 2 source build environment](http://docs.ros.org/en/rolling/Installation/Alternatives/Ubuntu-Development-Setup.html) is required to build and run the parameter server.
 
 ### Build
 
