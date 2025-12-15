@@ -29,6 +29,30 @@
 #define PERSISTENT_KEY        "persistent"
 #define PERSISTENT_DOT_KEY    "persistent."
 
+/* This function converts a double into a 'double representation'
+ * making sure that the resulting value either is in
+ * floating point notation with a trailing .0 (e.g.: 10.0)
+ * or in scientific notation (e.g.: 10e5)
+ */
+static std::string convertDoubleToString(double v, size_t precision = 0)
+{
+  // convert string with stringstream to string
+  auto ss = std::stringstream{};
+  ss << std::setprecision(precision) << v;
+  auto str = ss.str();
+
+  // check if representation has a '.' or 'e'
+  //  otherwise add an additional .0 at the end
+  bool hasDecimalPoint = str.find('.') != std::string::npos;
+  bool hasScientificFormat = str.find('e') != std::string::npos;
+
+  if (!hasDecimalPoint && !hasScientificFormat)
+  {
+    str = str + ".0";
+  }
+  return str;
+}
+
 ParameterServer::ParameterServer(
   const std::string & node_name,
   const rclcpp::NodeOptions & options,
@@ -334,7 +358,14 @@ void setConfigParam(YAML::Node node, Iter begin, Iter end, T value)
 
   if (std::next(begin) == end)
   {
-    node[tag] = value;
+    if constexpr (std::is_same_v<T, double>)
+    {
+      node[tag] = convertDoubleToString(value);
+    }
+    else
+    {
+      node[tag] = value;
+    }
     return;
   }
   if (!node[tag])
@@ -351,7 +382,14 @@ void setConfigParam(YAML::Node node, Iter begin, Iter end, T value)
         tag += "." + *begin;
 
         if (std::next(begin) == end) {
-          node[tag] = value;
+          if constexpr (std::is_same_v<T, double>)
+          {
+            node[tag] = convertDoubleToString(value);
+          }
+          else
+          {
+            node[tag] = value;
+          }
           return;
         }
       }
@@ -422,7 +460,7 @@ void ParameterServer::SaveNode(YAML::Emitter& out, YAML::Node node, const std::s
           case rclcpp::ParameterType::PARAMETER_DOUBLE:
           {
             double value = parameter.as_double();
-            out << YAML::Value << value;
+            out << YAML::Value << convertDoubleToString(value);
             break;
           }
           case rclcpp::ParameterType::PARAMETER_STRING:
@@ -457,7 +495,11 @@ void ParameterServer::SaveNode(YAML::Emitter& out, YAML::Node node, const std::s
           case rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY:
           {
             auto array = parameter.as_double_array();
-            out << YAML::Value << YAML::Flow << array;
+            std::vector<std::string> str_array;
+            for (auto v : array) {
+                str_array.push_back(convertDoubleToString(v));
+            }
+            out << YAML::Value << YAML::Flow << str_array;
             break;
           }
           case rclcpp::ParameterType::PARAMETER_STRING_ARRAY:
