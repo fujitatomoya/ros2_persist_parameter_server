@@ -38,6 +38,7 @@ static std::string convertDoubleToString(double v, size_t precision = 0)
 {
   // convert string with stringstream to string
   auto ss = std::stringstream{};
+  ss.imbue(std::locale::classic()); // ensure a dot ('.') is always used as decimal point
   ss << std::setprecision(precision) << v;
   auto str = ss.str();
 
