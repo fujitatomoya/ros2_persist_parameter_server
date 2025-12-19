@@ -106,7 +106,25 @@ public:
                 }
               }
               break;
-            // One might extend here for other types if needed (e.g., bool, double)
+            case rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY:
+              if constexpr (std::is_same_v<ValueType, std::vector<double>>) {
+                auto actual_array = param.as_double_array();
+                auto expected_array = expected_value.value();
+                if (actual_array.size() == expected_array.size()) {
+                  value_matches = true;
+                  for (size_t i = 0; i < actual_array.size(); ++i) {
+                    if (abs(actual_array[i] - expected_array[i]) >= std::numeric_limits<double>::epsilon()) {
+                      value_matches = false;
+                      RCLCPP_WARN(
+                        this->get_logger(),
+                        "Double array mismatch at index %zu: actual=%.17g, expected=%.17g, diff=%.17g",
+                        i, actual_array[i], expected_array[i], abs(actual_array[i] - expected_array[i]));
+                      break;
+                    }
+                  }
+                }
+              }
+              break;
             default:
               break;
           }
@@ -164,7 +182,7 @@ public:
   void do_reload_and_check(const std::string & param_name, const ValueType & changed_value, const std::optional<ValueType> & expected_value, const std::string & testcase) {      
     bool ret = false;
 
-    ret = persist_param_client_.modify_parameter<std::string>(param_name, changed_value);
+    ret = persist_param_client_.modify_parameter<ValueType>(param_name, changed_value);
     /*
     * If the Modify operation failed, record it in result_map, and no need to run the 
     * subsequent read tests.
@@ -196,7 +214,7 @@ public:
   void do_save_and_check(const std::string & param_name, const ValueType & changed_value, const std::string & testcase) {
     bool ret = false;
 
-    ret = persist_param_client_.modify_parameter<std::string>(param_name, changed_value);
+    ret = persist_param_client_.modify_parameter<ValueType>(param_name, changed_value);
     /*
     * If the Modify operation failed, record it in result_map, and no need to run the 
     * subsequent read tests.
