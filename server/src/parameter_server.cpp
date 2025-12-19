@@ -16,6 +16,7 @@
 
 #include <chrono>
 #include <fstream>
+#include <limits>
 #include <map>
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
@@ -29,27 +30,28 @@
 #define PERSISTENT_KEY        "persistent"
 #define PERSISTENT_DOT_KEY    "persistent."
 
-/* This function converts a double into a 'double representation'
- * making sure that the resulting value either is in
- * floating point notation with a trailing .0 (e.g.: 10.0)
- * or in scientific notation (e.g.: 10e5)
+/**
+ * @brief Converts a double to string with proper floating-point representation.
+ *
+ * Ensures the output contains either a decimal point with .0 suffix (e.g., 10.0)
+ * or scientific notation (e.g., 1e5), never plain integers.
+ * @param v The double value to convert.
+ * @param precision The number of digits to represent. Defaults to max_digits10 for full precision.
+ * @return std::string The string representation of the double.
  */
-static std::string convertDoubleToString(double v, size_t precision = 0)
+static std::string convertDoubleToString(
+  double v,
+  const size_t precision = std::numeric_limits<double>::max_digits10)
 {
-  // convert string with stringstream to string
+  // Convert to string using stringstream with classic locale for consistent decimal point formatting
   auto ss = std::stringstream{};
-  ss.imbue(std::locale::classic()); // ensure a dot ('.') is always used as decimal point
+  ss.imbue(std::locale::classic());
   ss << std::setprecision(precision) << v;
   auto str = ss.str();
 
-  // check if representation has a '.' or 'e'
-  //  otherwise add an additional .0 at the end
-  bool hasDecimalPoint = str.find('.') != std::string::npos;
-  bool hasScientificFormat = str.find('e') != std::string::npos;
-
-  if (!hasDecimalPoint && !hasScientificFormat)
-  {
-    str = str + ".0";
+  // Append .0 if the string lacks both decimal point and scientific notation
+  if (str.find('.') == std::string::npos && str.find('e') == std::string::npos) {
+    str += ".0";
   }
   return str;
 }
