@@ -319,10 +319,6 @@ The process completed successfully.
 
 ## Known Issues
 
-- [Error when loading a persistent parameter of type array<double>](https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/13)
-  - `[1.0,1.1]` is deduced as `[1, 1.1000000000000001]` because of [yaml-cpp bug](https://github.com/jbeder/yaml-cpp/issues/1016), this will leads to `Failed to parse parameters` exception when loading the persistent parameters from yaml file.
-  - The work-around is to use string sequence `["1.0", "1.1"]` instead of double type, then change it into `float()` in the program.
-
 - [Signal2(2) needs to be injected to the server executable](https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/24)
   - Because of https://github.com/ros2/ros2cli/pull/899 and [What is main process in container](https://docs.docker.com/engine/containers/multi-service_container/), signal (SIGINT/SIGTERM) does not directly go to the server process. This causes the server not to store the persistent parameters in the file system, since the server expects the signal to shutdown the process and store the all persistent parameters in the specified file system.
   - The work-around is that, configure container main process with the server executables (not using `ros2 run` until https://github.com/ros2/ros2cli/pull/899 is solved) or send the signal from the host system to the server process in the container using `docker exec <YOUR CONTAINER> kill -SIGINT <SERVER PID IN CONTAINER>`.
