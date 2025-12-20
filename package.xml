@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>persist_parameter_server</name>
-  <version>1.0.3</version>
+  <version>1.0.4</version>
   <description>
     ros2 parameter server that other nodes can write/read parameters including persistent parameters.
   </description>

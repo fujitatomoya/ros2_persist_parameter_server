@@ -2,8 +2,8 @@
 Changelog for package persist_parameter_server
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.4 (2025-12-20)
+------------------
 * fix: save floats in explicit float notation (`#67 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/67>`_)
   * fix: save floats in explicit float notation
   YAML only has the concept of scalar values. So a value of '1' could be
