@@ -100,7 +100,7 @@ public:
             case rclcpp::ParameterType::PARAMETER_DOUBLE:
               if constexpr (std::is_floating_point_v<ValueType>) {
                 if (
-                  abs(param.as_double() - expected_value.value()) <
+                  std::abs(param.as_double() - expected_value.value()) <
                   std::numeric_limits<double>::epsilon()) {
                   value_matches = true;
                 }
@@ -113,12 +113,12 @@ public:
                 if (actual_array.size() == expected_array.size()) {
                   value_matches = true;
                   for (size_t i = 0; i < actual_array.size(); ++i) {
-                    if (abs(actual_array[i] - expected_array[i]) >= std::numeric_limits<double>::epsilon()) {
+                    if (std::abs(actual_array[i] - expected_array[i]) >= std::numeric_limits<double>::epsilon()) {
                       value_matches = false;
                       RCLCPP_WARN(
                         this->get_logger(),
                         "Double array mismatch at index %zu: actual=%.17g, expected=%.17g, diff=%.17g",
-                        i, actual_array[i], expected_array[i], abs(actual_array[i] - expected_array[i]));
+                        i, actual_array[i], expected_array[i], std::abs(actual_array[i] - expected_array[i]));
                       break;
                     }
                   }
