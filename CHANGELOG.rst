@@ -2,6 +2,34 @@
 Changelog for package persist_parameter_server
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix: save floats in explicit float notation (`#67 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/67>`_)
+  * fix: save floats in explicit float notation
+  YAML only has the concept of scalar values. So a value of '1' could be
+  an integer, float or string. ros2_persist_parameter_server relies
+  on being able to differentiate if something is a float or integer based
+  on the representation of numbers. Floating numbers must be written such
+  that they can not be mistaken as integers. This is comparable to how
+  many programming languages assume '1' is an integer and '1.0' is a
+  floating point number.
+  The library yaml-cpp exports a float without the distinguishing feature
+  required for ros2_persist_parameter_server. To fix this we manually
+  convert the double into a string representation and ensure that
+  a '.0' extension will be added when required.
+  Note to future maintainer. The current yaml-cpp branch has a
+  YAML::FpToString function which is better suited than using
+  std::stringstream but is not available in the current yaml-cpp release.
+  * fix: enforce a dot as decimal point
+  * refactor convertDoubleToString function.
+  * add test case to make sure double type can be handled.
+  * remove this problem from known issue description in README.md.
+  * skil auto-genrated CHANGELOG.rst from codespell checker.
+  * use std::abs instead of c abs().
+  ---------
+  Co-authored-by: Tomoya Fujita <Tomoya.Fujita@sony.com>
+* Contributors: Simon Gene Gottlieb
+
 1.0.3 (2025-12-08)
 ------------------
 * update pdf and html presentation slides.
