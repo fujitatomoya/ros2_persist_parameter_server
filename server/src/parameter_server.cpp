@@ -16,6 +16,7 @@
 
 #include <chrono>
 #include <fstream>
+#include <limits>
 #include <map>
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
@@ -28,6 +29,32 @@
 #define ROS_PARAMETER_DOT_KEY "ros__parameters."
 #define PERSISTENT_KEY        "persistent"
 #define PERSISTENT_DOT_KEY    "persistent."
+
+/**
+ * @brief Converts a double to string with proper floating-point representation.
+ *
+ * Ensures the output contains either a decimal point with .0 suffix (e.g., 10.0)
+ * or scientific notation (e.g., 1e5), never plain integers.
+ * @param v The double value to convert.
+ * @param precision The number of digits to represent. Defaults to max_digits10 for full precision.
+ * @return std::string The string representation of the double.
+ */
+static std::string convertDoubleToString(
+  double v,
+  const size_t precision = std::numeric_limits<double>::max_digits10)
+{
+  // Convert to string using stringstream with classic locale for consistent decimal point formatting
+  auto ss = std::stringstream{};
+  ss.imbue(std::locale::classic());
+  ss << std::setprecision(precision) << v;
+  auto str = ss.str();
+
+  // Append .0 if the string lacks both decimal point and scientific notation
+  if (str.find('.') == std::string::npos && str.find('e') == std::string::npos) {
+    str += ".0";
+  }
+  return str;
+}
 
 ParameterServer::ParameterServer(
   const std::string & node_name,
@@ -334,7 +361,14 @@ void setConfigParam(YAML::Node node, Iter begin, Iter end, T value)
 
   if (std::next(begin) == end)
   {
-    node[tag] = value;
+    if constexpr (std::is_same_v<T, double>)
+    {
+      node[tag] = convertDoubleToString(value);
+    }
+    else
+    {
+      node[tag] = value;
+    }
     return;
   }
   if (!node[tag])
@@ -351,7 +385,14 @@ void setConfigParam(YAML::Node node, Iter begin, Iter end, T value)
         tag += "." + *begin;
 
         if (std::next(begin) == end) {
-          node[tag] = value;
+          if constexpr (std::is_same_v<T, double>)
+          {
+            node[tag] = convertDoubleToString(value);
+          }
+          else
+          {
+            node[tag] = value;
+          }
           return;
         }
       }
@@ -422,7 +463,7 @@ void ParameterServer::SaveNode(YAML::Emitter& out, YAML::Node node, const std::s
           case rclcpp::ParameterType::PARAMETER_DOUBLE:
           {
             double value = parameter.as_double();
-            out << YAML::Value << value;
+            out << YAML::Value << convertDoubleToString(value);
             break;
           }
           case rclcpp::ParameterType::PARAMETER_STRING:
@@ -457,7 +498,11 @@ void ParameterServer::SaveNode(YAML::Emitter& out, YAML::Node node, const std::s
           case rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY:
           {
             auto array = parameter.as_double_array();
-            out << YAML::Value << YAML::Flow << array;
+            std::vector<std::string> str_array;
+            for (auto v : array) {
+                str_array.push_back(convertDoubleToString(v));
+            }
+            out << YAML::Value << YAML::Flow << str_array;
             break;
           }
           case rclcpp::ParameterType::PARAMETER_STRING_ARRAY:
