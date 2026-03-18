@@ -32,7 +32,7 @@ int main(int argc, char **argv)
   auto nonros_args = rclcpp::init_and_remove_ros_arguments(argc, argv);
 
   options_description description("ROS2 parameter server command line interfaces");
-description.add_options()
+  description.add_options()
     ("help,h", "help message to show interfaces")
     ("file-path,f", value<string>()->default_value("/tmp/parameter_server.yaml"),
     "volume path to load/store parameters in yaml format (default /tmp/parameter_server.yaml)")
