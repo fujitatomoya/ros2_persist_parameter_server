@@ -139,18 +139,13 @@ ParameterServer::ParameterServer(
   auto post_param_change_callback =
     [this](const std::vector<rclcpp::Parameter> & parameters)
     {
-      auto result = rcl_interfaces::msg::SetParametersResult();
-      result.successful = true;
-
       if (CheckPersistentParam(parameters))
       {
         if(must_save_on_update_)
         {
           this->StoreYamlFile();
-        } 
+        }
       }
-
-      return result;
     };
   // callback_handler_ needs to be alive to keep the callback functional
   callback_handler_ = this->add_on_set_parameters_callback(param_change_callback);
