@@ -1,0 +1,251 @@
+// Copyright 2025 Sony Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include <map>
+#include <optional>
+#include <stdexcept>
+#include <type_traits>
+
+#include "persist_parameter_client.hpp"
+#include "test_common.h"
+
+rclcpp::Logger TestPersistParameter::client_logger_ = rclcpp::get_logger("client");
+
+// This test must be run simultaneously with the server node launched with
+// --save-on-update true and --storing-period 0
+int main(int argc, char ** argv)
+{
+  // force flush of the stdout buffer.
+  // this ensures a correct sync of all prints
+  // even when executed simultaneously within the launch file.
+  setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+
+  rclcpp::init(argc, argv);
+  std::shared_ptr<TestPersistParameter> test_client;
+
+  int ret_code = 0;
+  try {
+    test_client = std::make_shared<TestPersistParameter>("client", rclcpp::NodeOptions());
+
+    /*
+    * Test: Auto-save on parameter change.
+    * With save-on-update enabled, setting a persistent parameter should immediately persist it.
+    * We verify this by setting a value, then reloading (without manual save) and checking
+    * the value survived the reload.
+    */
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Test auto-save: set persistent parameter and reload");
+
+      // Set a persistent string parameter — should be auto-saved
+      test_client->do_change_and_check<std::string>(
+        "persistent.auto_saved_string", std::string{"AutoSaved"},
+        "a. Set persistent string parameter");
+
+      // Reload from disk — the value should persist because save-on-update is enabled
+      auto reload_res = test_client->get_client().reload_yaml();
+      if (!reload_res || !reload_res->success) {
+        throw SetOperationError();
+      }
+      test_client->do_read_and_check<std::string>(
+        "persistent.auto_saved_string", "AutoSaved",
+        "b. Persistent string survives reload (auto-saved)");
+    }
+
+    /*
+    * Test: Auto-save with integer parameter.
+    */
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Test auto-save: integer parameter");
+
+      test_client->do_change_and_check<int>(
+        "persistent.auto_saved_int", 42,
+        "c. Set persistent integer parameter");
+
+      auto reload_res = test_client->get_client().reload_yaml();
+      if (!reload_res || !reload_res->success) {
+        throw SetOperationError();
+      }
+      test_client->do_read_and_check<int>(
+        "persistent.auto_saved_int", 42,
+        "d. Persistent integer survives reload (auto-saved)");
+    }
+
+    /*
+    * Test: Auto-save with double parameter.
+    */
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Test auto-save: double parameter");
+
+      test_client->do_change_and_check<double>(
+        "persistent.auto_saved_double", 3.14159,
+        "e. Set persistent double parameter");
+
+      auto reload_res = test_client->get_client().reload_yaml();
+      if (!reload_res || !reload_res->success) {
+        throw SetOperationError();
+      }
+      test_client->do_read_and_check<double>(
+        "persistent.auto_saved_double", 3.14159,
+        "f. Persistent double survives reload (auto-saved)");
+    }
+
+    /*
+    * Test: Auto-save with bool parameter.
+    */
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Test auto-save: bool parameter");
+
+      test_client->do_change_and_check<bool>(
+        "persistent.auto_saved_bool", true,
+        "g. Set persistent bool parameter");
+
+      auto reload_res = test_client->get_client().reload_yaml();
+      if (!reload_res || !reload_res->success) {
+        throw SetOperationError();
+      }
+      test_client->do_read_and_check<bool>(
+        "persistent.auto_saved_bool", true,
+        "h. Persistent bool survives reload (auto-saved)");
+    }
+
+    /*
+    * Test: Normal (non-persistent) parameters should NOT be auto-saved.
+    * Setting a normal parameter and reloading should revert it to the original value.
+    */
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Test normal parameter is NOT auto-saved");
+
+      test_client->do_change_and_check<std::string>(
+        "normal_not_saved", std::string{"Transient"},
+        "i. Set normal (non-persistent) parameter");
+
+      auto reload_res = test_client->get_client().reload_yaml();
+      if (!reload_res || !reload_res->success) {
+        throw SetOperationError();
+      }
+      // After reload, a normal parameter that was not in the original YAML should be NOT_SET
+      test_client->do_read_and_check<std::string>(
+        "normal_not_saved", "Transient",
+        "j. Normal parameter retains in-memory value after reload (not in file)");
+    }
+
+    /*
+    * Test: Updating an auto-saved parameter overwrites the previous value.
+    */
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Test auto-save overwrites previous value");
+
+      test_client->do_change_and_check<std::string>(
+        "persistent.auto_saved_string", std::string{"UpdatedValue"},
+        "k. Update previously auto-saved parameter");
+
+      auto reload_res = test_client->get_client().reload_yaml();
+      if (!reload_res || !reload_res->success) {
+        throw SetOperationError();
+      }
+      test_client->do_read_and_check<std::string>(
+        "persistent.auto_saved_string", "UpdatedValue",
+        "l. Updated value persists after reload");
+    }
+
+    /*
+    * Test: Manual save service still works alongside auto-save.
+    */
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Test manual save service still works");
+
+      test_client->do_save_and_check<std::string>(
+        "persistent.manually_saved", "ManualValue",
+        "m. Manual save service works with auto-save enabled");
+    }
+
+    /*
+    * Test: Manual reload service discards unsaved non-persistent changes.
+    */
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Test reload discards non-persistent changes");
+
+      // First set and auto-save a persistent parameter
+      test_client->do_change_and_check<std::string>(
+        "persistent.reload_test", std::string{"Saved"},
+        "n. Set persistent parameter for reload test");
+
+      // Now change it — this will also auto-save the new value
+      test_client->do_change_and_check<std::string>(
+        "persistent.reload_test", std::string{"Changed"},
+        "o. Change the parameter (also auto-saved)");
+
+      // Reload — should get the latest auto-saved value ("Changed")
+      auto reload_res = test_client->get_client().reload_yaml();
+      if (!reload_res || !reload_res->success) {
+        throw SetOperationError();
+      }
+      test_client->do_read_and_check<std::string>(
+        "persistent.reload_test", "Changed",
+        "p. Reload returns latest auto-saved value");
+    }
+
+    /*
+    * Test: Auto-save after server restart.
+    * Kill the server (respawn enabled), then check persisted values survive.
+    */
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Test auto-saved values survive server restart");
+
+      test_client->do_change_and_check<std::string>(
+        "persistent.survive_restart", std::string{"PersistMe"},
+        "q. Set parameter before server restart");
+    }
+
+    // Wait for the server to restart (killed externally by test.py)
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+
+    {
+      if (!test_client->wait_param_server_ready()) {
+        throw NoServerError();
+      }
+
+      RCLCPP_INFO(test_client->get_logger(), "Server restarted, checking persisted values");
+
+      test_client->do_read_and_check<std::string>(
+        "persistent.survive_restart", "PersistMe",
+        "r. Auto-saved parameter survives server restart");
+
+      // Also check that the previously auto-saved parameters are still there
+      test_client->do_read_and_check<std::string>(
+        "persistent.auto_saved_string", "UpdatedValue",
+        "s. Previously auto-saved string survives restart");
+
+      test_client->do_read_and_check<int>(
+        "persistent.auto_saved_int", 42,
+        "t. Previously auto-saved integer survives restart");
+    }
+
+  } catch (const rclcpp::exceptions::RCLError & e) {
+    ret_code = -1;
+    RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
+  } catch (const NoServerError & e) {
+    ret_code = -2;
+    RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
+  } catch (const SetOperationError & e) {
+    ret_code = -3;
+    RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
+  }
+
+  // if any tests are not passed, return EXIT_FAILURE.
+  ret_code = test_client->print_result();
+  rclcpp::shutdown();
+
+  return ret_code;
+}

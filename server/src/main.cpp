@@ -57,7 +57,7 @@ int main(int argc, char **argv)
   bool opt_allow_override = true;
   unsigned int storing_period = 60;
   bool opt_allow_dynamic_typing = false;
-  bool opt_save_on_update = true;
+  bool opt_save_on_update = false;
 
   if (vm.count("help"))
   {
