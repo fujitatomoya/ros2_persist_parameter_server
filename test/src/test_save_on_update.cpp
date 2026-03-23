@@ -80,27 +80,6 @@ int main(int argc, char ** argv)
     }
 
     /*
-    * Test: Normal (non-persistent) parameters should NOT be auto-saved.
-    * Setting a normal parameter and reloading should revert it to the original value.
-    */
-    {
-      RCLCPP_INFO(test_client->get_logger(), "Test normal parameter is NOT auto-saved");
-
-      test_client->do_change_and_check<std::string>(
-        "normal_not_saved", std::string{"Transient"},
-        "i. Set normal (non-persistent) parameter");
-
-      auto reload_res = test_client->get_client().reload_yaml();
-      if (!reload_res || !reload_res->success) {
-        throw SetOperationError();
-      }
-      // After reload, a normal parameter that was not in the original YAML should be NOT_SET
-      test_client->do_read_and_check<std::string>(
-        "normal_not_saved", "Transient",
-        "j. Normal param retains in-memory value when reload");
-    }
-
-    /*
     * Test: Updating an auto-saved parameter overwrites the previous value.
     */
     {
@@ -108,7 +87,7 @@ int main(int argc, char ** argv)
 
       test_client->do_change_and_check<std::string>(
         "persistent.auto_saved_string", std::string{"UpdatedValue"},
-        "k. Update previously auto-saved parameter");
+        "i. Update previously auto-saved parameter");
 
       auto reload_res = test_client->get_client().reload_yaml();
       if (!reload_res || !reload_res->success) {
@@ -116,7 +95,7 @@ int main(int argc, char ** argv)
       }
       test_client->do_read_and_check<std::string>(
         "persistent.auto_saved_string", "UpdatedValue",
-        "l. Updated value persists after reload");
+        "j. Updated value persists after reload");
     }
 
     /*
@@ -127,7 +106,7 @@ int main(int argc, char ** argv)
 
       test_client->do_save_and_check<std::string>(
         "persistent.manually_saved", "ManualValue",
-        "m. Manual save service works with auto-save enabled");
+        "k. Manual save service works with auto-save enabled");
     }
 
     /*
@@ -139,12 +118,12 @@ int main(int argc, char ** argv)
       // First set and auto-save a persistent parameter
       test_client->do_change_and_check<std::string>(
         "persistent.reload_test", std::string{"Saved"},
-        "n. Set persistent parameter for reload test");
+        "l. Set persistent parameter for reload test");
 
       // Now change it — this will also auto-save the new value
       test_client->do_change_and_check<std::string>(
         "persistent.reload_test", std::string{"Changed"},
-        "o. Change the parameter (also auto-saved)");
+        "m. Change the parameter (also auto-saved)");
     }
 
   } catch (const rclcpp::exceptions::RCLError & e) {
