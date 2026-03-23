@@ -95,13 +95,8 @@ print(f"Parameter Server Process started with PID: {server_process.pid}")
 client_process = subprocess.Popen(launchClientCmdSaveOnUpdate)
 print(f"Parameter Client Process started with PID: {client_process.pid}")
 
-# Start killer thread to re-spawn the parameter server
-t3 = Thread(target = kill_server, args = ())
-t3.start()
-
 # Wait until the client process finishes and then kill the server
 return_code3 = client_process.wait()
-t3.join()
 os.killpg(os.getpgid(server_process.pid), signal.SIGTERM)
 
 print("\nTest process finished.")
