@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
+        with:
+          ref: jazzy
       - name: Build and Test with ROS jazzy
         shell: bash
         run: |
