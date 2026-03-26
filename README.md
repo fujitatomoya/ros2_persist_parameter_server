@@ -1,4 +1,4 @@
-[![humble](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/humble.yml/badge.svg)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/humble.yml) [![jazzy](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/jazzy.yml/badge.svg)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/jazzy.yml) [![kilted](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/kilted.yml/badge.svg)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/kilted.yml) [![rolling](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/rolling.yml/badge.svg)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/rolling.yml)
+[![humble](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/humble.yml/badge.svg?branch=humble)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/humble.yml) [![jazzy](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/jazzy.yml/badge.svg?branch=jazzy)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/jazzy.yml) [![kilted](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/kilted.yml/badge.svg?branch=kilted)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/kilted.yml) [![rolling](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/rolling.yml/badge.svg?branch=rolling)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/rolling.yml)
 [![humble-nightly](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/humble-nightly.yml/badge.svg)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/humble-nightly.yml) [![jazzy-nightly](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/jazzy-nightly.yml/badge.svg)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/jazzy-nightly.yml) [![kilted-nightly](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/kilted-nightly.yml/badge.svg)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/kilted-nightly.yml) [![rolling-nightly](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/rolling-nightly.yml/badge.svg)](https://github.com/fujitatomoya/ros2_persist_parameter_server/actions/workflows/rolling-nightly.yml)
 
 # ROS2 Persistent Parameter Server
@@ -164,12 +164,12 @@ Tutorial Video is provided by [The Construct Robotics Institute](https://www.the
 
 ### [Supported Distribution](https://docs.ros.org/en/rolling/Releases.html)
 
-| Distribution      | Supported | Comment |
+| Distribution      | Supported | Branch |
 | :---------------- | :-------- | :--- |
-| Rolling Ridley    |    ✅    | Default branch, used for all distribution |
-| Kilted Kaiju      |    ✅    |   |
-| Jazzy Jalisco     |    ✅    |   |
-| Humble Hawksbill  |    ✅    |   |
+| Rolling Ridley    |    ✅    | [`rolling`](https://github.com/fujitatomoya/ros2_persist_parameter_server/tree/rolling) (default) |
+| Kilted Kaiju      |    ✅    | [`kilted`](https://github.com/fujitatomoya/ros2_persist_parameter_server/tree/kilted) |
+| Jazzy Jalisco     |    ✅    | [`jazzy`](https://github.com/fujitatomoya/ros2_persist_parameter_server/tree/jazzy) |
+| Humble Hawksbill  |    ✅    | [`humble`](https://github.com/fujitatomoya/ros2_persist_parameter_server/tree/humble) |
 
 #### Docker Container
 
@@ -195,7 +195,7 @@ Install local colcon workspace,
 
 ```bash
 # cd <colcon_workspace>/src
-# git clone https://github.com/fujitatomoya/ros2_persist_parameter_server
+# git clone -b <ROS_DISTRO> https://github.com/fujitatomoya/ros2_persist_parameter_server
 # cd <colcon_workspace>
 # colcon build --symlink-install --packages-select persist_parameter_server --cmake-args -D CLIENT_TEST_DEMO=ON
 # source install/local_setup.bash

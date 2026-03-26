@@ -3,9 +3,9 @@ name: jazzy
 
 on:
   push:
-    branches: [ "rolling" ]
+    branches: [ "jazzy" ]
   pull_request:
-    branches: [ "rolling" ]
+    branches: [ "jazzy" ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
