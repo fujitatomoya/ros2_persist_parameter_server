@@ -87,10 +87,11 @@ parameter server has the following scope for persistent parameter. since paramet
 
 - Node Options
 
-  there are three important options:
+  there are four important options:
   - allow_undeclared_parameters: (default true)
   - automatically_declare_parameters_from_overrides: (default true)
   - allow_dynamic_typing: (default false)
+  - save-on-update: (default false)
 all of the configuration options will be passed via arguments as following.
 
 <table>
@@ -125,7 +126,7 @@ all of the configuration options will be passed via arguments as following.
         </tr>
         </tr>
         <tr>
-            <td rowspan=3>Node Options</td>
+            <td rowspan=4>Node Options</td>
             <td>--allow-declare true/false</td>
             <td>default enabled, if specified allow any parameter name to be set on parameter server without declaration by itself. Otherwise it does not.</td>
         </tr>
@@ -136,6 +137,10 @@ all of the configuration options will be passed via arguments as following.
         <tr>
             <td>--allow-dynamic-typing true/false</td>
             <td>Enables dynamic typing for parameters, allowing their types to be changed after declaration.</td>
+        </tr>
+        <tr>
+            <td>--save-on-update true/false</td>
+            <td>Saves parameter file each time the value of a parameter is changed.</td>
         </tr>
     </tbody>
 </table>

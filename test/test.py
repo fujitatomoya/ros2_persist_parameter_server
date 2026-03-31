@@ -22,6 +22,12 @@ launchServerCmdWithNodeOptions = [
 launchClientCmdWithNodeOptions = [
     'ros2', 'run', 'persist_parameter_server', 'client_with_node_options']
 
+launchServerCmdSaveOnUpdate = [
+    'ros2', 'launch', 'persist_parameter_server', 'test.launch.py',
+    'save_on_update:=true', 'storing_period:=0']
+launchClientCmdSaveOnUpdate = [
+    'ros2', 'run', 'persist_parameter_server', 'client_save_on_update']
+
 if shutil.which('ros2') is None:
     print("source <colcon_ws>/install/setup.bash...then retry.")
     sys.exit(1)
@@ -78,11 +84,26 @@ print(f"Parameter Client Process started with PID: {client_process.pid}")
 return_code2 = client_process.wait()
 os.killpg(os.getpgid(server_process.pid), signal.SIGTERM)
 
+print("\nTest with node options finished. Proceeding to testing save-on-update")
+
+# Start the server with save-on-update enabled
+server_process = subprocess.Popen(
+    launchServerCmdSaveOnUpdate, preexec_fn=os.setsid)
+print(f"Parameter Server Process started with PID: {server_process.pid}")
+
+# Start test client process
+client_process = subprocess.Popen(launchClientCmdSaveOnUpdate)
+print(f"Parameter Client Process started with PID: {client_process.pid}")
+
+# Wait until the client process finishes and then kill the server
+return_code3 = client_process.wait()
+os.killpg(os.getpgid(server_process.pid), signal.SIGTERM)
+
 print("\nTest process finished.")
 print(f"Return Code: {return_code}")
 
 # Check if the client process completed successfully
-if return_code == return_code2 == 0:
+if return_code == return_code2 == return_code3 == 0:
     print("The process completed successfully.")
     sys.exit(0)
 else:
