@@ -123,7 +123,26 @@ target_include_directories(client_with_node_options
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test/include>
 )
 
-install(TARGETS client_default client_with_node_options DESTINATION lib/${PROJECT_NAME})
+add_executable(client_save_on_update
+  test/src/test_save_on_update.cpp
+  test/src/persist_parameter_client.cpp
+)
+
+target_link_libraries(client_save_on_update
+  PUBLIC
+  rclcpp::rclcpp
+  rclcpp_components::component
+  rcutils::rcutils
+  ${std_msgs_TARGETS}
+  ${std_srvs_TARGETS}
+)
+
+target_include_directories(client_save_on_update
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test/include>
+)
+
+install(TARGETS client_default client_with_node_options client_save_on_update DESTINATION lib/${PROJECT_NAME})
 
 # Install launch files.
 install(DIRECTORY
