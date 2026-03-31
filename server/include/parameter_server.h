@@ -37,6 +37,7 @@ public:
   ~ParameterServer();
 
 private:
+  bool must_save_on_update_ = false;
   // Using custom yaml file same as yaml format of ros2 parameter as much as possible,
   // so use rcl_yaml_param_parser functions directly to load custom persistent yaml file.
   void LoadYamlFile();
@@ -71,6 +72,7 @@ private:
 
   // set parameters callback handler
   OnSetParametersCallbackHandle::SharedPtr callback_handler_;
+  PostSetParametersCallbackHandle::SharedPtr post_set_callback_handler_;
 
   // for periodic storing to the file system
   rclcpp::TimerBase::SharedPtr timer_;
