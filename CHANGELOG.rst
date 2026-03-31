@@ -2,8 +2,8 @@
 Changelog for package persist_parameter_server
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.5 (2026-03-31)
+------------------
 * fix redundant and unexpected mergify configuration for barckports. (`#87 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/87>`_)
 * Add save on update argument (`#73 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/73>`_)
   * Add must save on update possibility
