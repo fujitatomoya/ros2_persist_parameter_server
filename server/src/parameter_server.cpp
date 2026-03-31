@@ -78,12 +78,21 @@ ParameterServer::ParameterServer(
     if (param.get_name() == "storing_period") {
       storing_period = param.as_int();
     }
+    if (param.get_name() == "must_save_on_update") {
+      this->must_save_on_update_ = param.as_bool();
+    }
   }
 
   if (allow_dynamic_typing_) {
     RCLCPP_INFO(
       this->get_logger(),
       "Dynamic typing enabled. Read persistent parameters will be dynamically typed.");
+  }
+
+  if (must_save_on_update_) {
+    RCLCPP_INFO(
+      this->get_logger(),
+      "Save on update enabled. Parameters will be saved when set.");
   }
 
   if (storing_period < 0) {
@@ -126,8 +135,21 @@ ParameterServer::ParameterServer(
 
       return result;
     };
+  
+  auto post_param_change_callback =
+    [this](const std::vector<rclcpp::Parameter> & parameters)
+    {
+      if (CheckPersistentParam(parameters))
+      {
+        if(must_save_on_update_)
+        {
+          this->StoreYamlFile();
+        }
+      }
+    };
   // callback_handler_ needs to be alive to keep the callback functional
   callback_handler_ = this->add_on_set_parameters_callback(param_change_callback);
+  post_set_callback_handler_ = this->add_post_set_parameters_callback(post_param_change_callback);
 
   save_trigger_ = this->create_service<std_srvs::srv::Trigger>("~/save_params",
     [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr& req,
