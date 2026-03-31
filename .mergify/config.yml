@@ -2,25 +2,14 @@ pull_request_rules:
   - name: automatic backport to all supported distribution
     description: |
       This rule backports a PR to all supported distribution branches when it is merged.
+      If any individual backport label is set, this rule is suppressed and label-based rules take over.
     conditions:
       - base=rolling
       - merged
-      - label!=skip-backport  # Do not backport if this label exists
-    actions:
-      backport:
-        branches:
-          - kilted
-          - jazzy
-          - humble
-
-  - name: backport at reviewers discretion
-    description: |
-      This rule backports a PR to all supported distribution branches when it is labeled.
-    conditions:
-      - base=rolling
-      - "label=backport-all"
-      - merged
-      - label!=skip-backport  # Do not backport if this label exists
+      - label!=skip-backport    # Do not backport if this label exists
+      - label!=backport-kilted  # Suppress auto-backport if reviewer controls it
+      - label!=backport-jazzy   # Suppress auto-backport if reviewer controls it
+      - label!=backport-humble  # Suppress auto-backport if reviewer controls it
     actions:
       backport:
         branches:
