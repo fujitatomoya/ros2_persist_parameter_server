@@ -72,7 +72,10 @@ private:
 
   // set parameters callback handler
   OnSetParametersCallbackHandle::SharedPtr callback_handler_;
+#if RCLCPP_VERSION_MAJOR >= 17
+  // PostSetParametersCallback is available in Iron (rclcpp 17.x) and later
   PostSetParametersCallbackHandle::SharedPtr post_set_callback_handler_;
+#endif
 
   // for periodic storing to the file system
   rclcpp::TimerBase::SharedPtr timer_;
