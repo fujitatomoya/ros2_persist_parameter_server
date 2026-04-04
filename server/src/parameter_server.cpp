@@ -67,7 +67,8 @@ ParameterServer::ParameterServer(
 {
   RCLCPP_DEBUG(this->get_logger(), "%s yaml:%s", __PRETTY_FUNCTION__, persistent_yaml_file_.c_str());
 
-  int storing_period = 0;
+  server_param_subscriber_ = std::make_shared<rclcpp::ParameterEventHandler>(this);
+
   // if automatically_declare_parameters_from_overrides is false, then the parameter_overrides will not be declared.
   // So it is safer to fetch the passed parameters directly from options.parameter_overrides()
   const std::vector<rclcpp::Parameter> & parameter_overrides = options.parameter_overrides();
@@ -108,15 +109,62 @@ ParameterServer::ParameterServer(
   } else {
     timer_ = this->create_wall_timer(
       std::chrono::seconds(storing_period), 
-      [this]{ 
-        StoreYamlFile(); 
-      }
+      std::bind(&ParameterServer::TimerCallback, this)
     );
 
     RCLCPP_INFO(
       this->get_logger(), "Will perform periodic persistent parameter storing every %ds",
       storing_period);
   }
+
+  auto save_on_update_param_change_callback =
+    [this](const rclcpp::Parameter & p) {
+      RCLCPP_INFO(
+        this->get_logger(), "Save on update parameter value changed to %s",
+        p.as_bool() ? "true" : "false");
+      must_save_on_update_ = p.as_bool();
+    };
+  save_on_update_callback_handle_ = server_param_subscriber_->add_parameter_callback(
+    "must_save_on_update",
+    save_on_update_param_change_callback
+  );
+
+  auto allow_dynamic_typing_param_change_callback =
+    [this](const rclcpp::Parameter & p) {
+      RCLCPP_INFO(
+        this->get_logger(), "Allow dynamic typing param value changed to %s",
+        p.as_bool() ? "true" : "false");
+      allow_dynamic_typing_ = p.as_bool();
+      LoadYamlFile();
+    };
+  dynamic_typing_callback_handle_ = server_param_subscriber_->add_parameter_callback(
+    "allow_dynamic_typing",
+    allow_dynamic_typing_param_change_callback
+  );
+
+  auto storing_period_param_change_callback =
+    [this](const rclcpp::Parameter & p) {
+
+      RCLCPP_INFO(
+        this->get_logger(), "Storing period param value changed to %ld",
+        p.as_int());
+      storing_period = p.as_int();
+
+      if (timer_) {
+        timer_->cancel();
+        timer_.reset();
+      }
+      if (storing_period > 0) {
+        timer_ = this->create_wall_timer(
+          std::chrono::seconds(storing_period),
+          std::bind(&ParameterServer::TimerCallback, this)
+        );
+      }
+    };
+  storing_period_callback_handle_ = server_param_subscriber_->add_parameter_callback(
+    "storing_period",
+    storing_period_param_change_callback
+  );
 
   // Declare a parameter change request callback
   auto param_change_callback =
@@ -192,6 +240,11 @@ ParameterServer::~ParameterServer()
 {
   RCLCPP_DEBUG(this->get_logger(), "%s", __PRETTY_FUNCTION__);
   this->remove_on_set_parameters_callback(callback_handler_.get());
+  StoreYamlFile();
+}
+
+void ParameterServer::TimerCallback() {
+  RCLCPP_INFO(this->get_logger(), "Storing parameters");
   StoreYamlFile();
 }
 

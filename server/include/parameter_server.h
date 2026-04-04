@@ -37,7 +37,15 @@ public:
   ~ParameterServer();
 
 private:
+  std::shared_ptr<rclcpp::ParameterEventHandler> server_param_subscriber_;
+  std::shared_ptr<rclcpp::ParameterCallbackHandle> storing_period_callback_handle_;
+  std::shared_ptr<rclcpp::ParameterCallbackHandle> dynamic_typing_callback_handle_;
+  std::shared_ptr<rclcpp::ParameterCallbackHandle> save_on_update_callback_handle_;
+
+  // Initialize parameters value
   bool must_save_on_update_ = false;
+  bool allow_dynamic_typing_ = false;
+  int storing_period = 0;
   // Using custom yaml file same as yaml format of ros2 parameter as much as possible,
   // so use rcl_yaml_param_parser functions directly to load custom persistent yaml file.
   void LoadYamlFile();
@@ -76,8 +84,8 @@ private:
 
   // for periodic storing to the file system
   rclcpp::TimerBase::SharedPtr timer_;
+  void TimerCallback();
 
-  bool allow_dynamic_typing_ = false;
   // For manual triggering of save
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr save_trigger_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr reload_trigger_;
