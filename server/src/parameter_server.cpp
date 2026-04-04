@@ -244,7 +244,6 @@ ParameterServer::~ParameterServer()
 }
 
 void ParameterServer::TimerCallback() {
-  RCLCPP_INFO(this->get_logger(), "Storing parameters");
   StoreYamlFile();
 }
 
