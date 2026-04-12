@@ -91,18 +91,55 @@ int main(int argc, char ** argv)
       RCLCPP_INFO(test_client->get_logger(), "Test storing timer can be modified");
       // Start with storing period at 2
       test_client->do_read_server_param_and_check<int64_t>("storing_period",
-        2, "k. Check initial storing period value");
-      // Modify the parameter and check that it is changed
+        2, "k. Check storing period is 2");
+      // Change to 30s so the timer won't fire within our 3s wait
       test_client->do_server_param_change_and_check<int64_t>("storing_period",
-        30, 30, "l. Dynamically change the value of storing period");
+        30, 30, "l. Increase storing period to 30s");
+      // Change a parameter to see if it will be stored
+      test_client->do_change_and_check<std::string>(
+        "persistent.a_string", std::string{"Kenobi"}, "m. Change persistent parameter");
 
-      // If the value hasn't been changed, the value should have been saved after 2 seconds
+      // Wait 3s — old 2s timer is cancelled, new 30s timer hasn't fired
       std::this_thread::sleep_for(std::chrono::seconds(3));
 
       // Reload from YAML and check the timer didn't save it
       test_client->do_reload_and_check<std::string>(
         "persistent.a_string", std::string{"Kenobi"}, std::string{"General"},
-        "m. Timer didn't save the value to disk");
+        "n. Timer didn't save the value to disk");
+    }
+
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Test storing timer can be turned off");
+      // Start with storing period at 30 from previous block
+      test_client->do_read_server_param_and_check<int64_t>("storing_period",
+        30, "o. Check storing period is 30");
+      // Turn off the timer
+      test_client->do_server_param_change_and_check<int64_t>("storing_period",
+        0, 0, "p. Disable storing period");
+      test_client->do_change_and_check<std::string>(
+        "persistent.a_string", std::string{"Kenobi"}, "q. Change persistent parameter");
+
+      // Wait 3s — no timer should fire
+      std::this_thread::sleep_for(std::chrono::seconds(3));
+
+      // Reload from YAML and check the timer didn't save it
+      test_client->do_reload_and_check<std::string>(
+        "persistent.a_string", std::string{"Kenobi"}, std::string{"General"},
+        "r. Timer didn't save the value to disk");
+    }
+
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Test allow_dynamic_typing param dynamic turn on");
+      // Start with allow_dynamic_typing at false
+      test_client->do_read_server_param_and_check<bool>("allow_dynamic_typing",
+        false, "s. Check initial allow_dynamic_typing value");
+      // Verify type change fails with dynamic typing off
+      test_client->do_fail_to_change<std::string>(
+        "persistent.some_int", std::string{"mutated"},
+        "t. Type change fails with dynamic typing off");
+      // Dynamically enable allow_dynamic_typing
+      test_client->do_server_param_change_and_check<bool>("allow_dynamic_typing",
+        true, true, "u. Dynamically enable allow_dynamic_typing");
     }
 
   } catch (const rclcpp::exceptions::RCLError & e) {
