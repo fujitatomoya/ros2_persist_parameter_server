@@ -46,9 +46,10 @@ int main(int argc, char ** argv)
       // Modify the parameter and check that it is changed
       test_client->do_server_param_change_and_check<bool>("must_save_on_update",
         true, true, "b. Dynamically enable save on update");
-      // Check that a modified value is saved on update
-      test_client->do_change_and_check<std::string>(
-        "persistent.a_string", std::string{"Hi"}, "c. Check that save on update works");
+      // Check that a persisten change can be made
+      test_client->do_reload_and_check<std::string>(
+        "persistent.a_string", std::string{"Hi"}, std::string{"Hi"},
+        "c. Check that change is saved on update");
     }
 
     {
@@ -65,7 +66,18 @@ int main(int argc, char ** argv)
         "f. Check that change is not saved on update");
     }
 
-    
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Test storing timer gets dynamically turned on");
+      //Start with storing period at 0
+      test_client->do_read_server_param_and_check<int>("storing_period",
+        0, "g. Check initial storing period value");
+      // Modify the parameter and check that it is changed
+      test_client->do_server_param_change_and_check<int>("storing_period",
+        5, 5, "h. Dynamically change the value of storing period");
+      test_client->do_change_and_check<std::string>(
+        "persistent.a_string", std::string{"General"}, "c. Check that we can store parameters");
+
+    }
   } catch (const rclcpp::exceptions::RCLError & e) {
     ret_code = -1;
     RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
