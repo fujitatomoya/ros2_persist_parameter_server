@@ -47,7 +47,7 @@ int main(int argc, char ** argv)
       // Modify the parameter and check that it is changed
       test_client->do_server_param_change_and_check<bool>("must_save_on_update",
         true, true, "b. Dynamically enable save on update");
-      // Check that a persisten change can be made
+      // Check that a persistent change can be made
       test_client->do_reload_and_check<std::string>(
         "persistent.a_string", std::string{"Hi"}, std::string{"Hi"},
         "c. Check that change is saved on update");
@@ -75,13 +75,14 @@ int main(int argc, char ** argv)
       // Modify the parameter and check that it is changed
       test_client->do_server_param_change_and_check<int64_t>("storing_period",
         2, 2, "h. Dynamically change the value of storing period");
+      // Make a change that should be saved when the timer fires
       test_client->do_change_and_check<std::string>(
         "persistent.a_string", std::string{"General"}, "i. Change persistent parameter");
 
       // Wait for the timer to fire
       std::this_thread::sleep_for(std::chrono::seconds(3));
 
-      // Reload from YAML and check the timer saved it
+      // Reload from YAML and check the timer saved the parameter
       test_client->do_reload_and_check<std::string>(
         "persistent.a_string", std::string{"General"}, std::string{"General"},
         "j. Timer saved the value to disk");
@@ -92,7 +93,7 @@ int main(int argc, char ** argv)
       // Start with storing period at 2
       test_client->do_read_server_param_and_check<int64_t>("storing_period",
         2, "k. Check storing period is 2");
-      // Change to 30s so the timer won't fire within our 3s wait
+      // Change to 30s so the timer won't fire after the old 3s timer
       test_client->do_server_param_change_and_check<int64_t>("storing_period",
         30, 30, "l. Increase storing period to 30s");
       // Change a parameter to see if it will be stored
@@ -113,9 +114,17 @@ int main(int argc, char ** argv)
       // Start with storing period at 30 from previous block
       test_client->do_read_server_param_and_check<int64_t>("storing_period",
         30, "o. Check storing period is 30");
+      // Go back to a 2 seconds timer to accelerate test
+      test_client->do_server_param_change_and_check<int64_t>("storing_period",
+        2, 2, "p. Reduce timer period");
+
+      // Wait 2s for the parameter to be set
+      std::this_thread::sleep_for(std::chrono::seconds(2));
+
       // Turn off the timer
       test_client->do_server_param_change_and_check<int64_t>("storing_period",
         0, 0, "p. Disable storing period");
+      // Make a change that should'nt be made persistent
       test_client->do_change_and_check<std::string>(
         "persistent.a_string", std::string{"Kenobi"}, "q. Change persistent parameter");
 
