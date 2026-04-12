@@ -219,7 +219,7 @@ public:
   * @param testcase The test case description.
   */
   template <typename ValueType>
-  bool do_server_param_change_and_check(const std::string & param_name, const ValueType & changed_value, const std::optional<ValueType> & expected_value, const std::string & testcase) {      
+  void do_server_param_change_and_check(const std::string & param_name, const ValueType & changed_value, const std::optional<ValueType> & expected_value, const std::string & testcase) {      
     bool ret = false;
     ret = persist_param_client_.modify_server_parameter<ValueType>(param_name, changed_value);
     
@@ -232,13 +232,17 @@ public:
   }
 
   template <typename ValueType>
-  bool do_read_server_param_and_check(const std::string & param_name, const std::optional<ValueType> & expected_value, const std::string & testcase) {      
+  void do_read_server_param_and_check(const std::string & param_name, const std::optional<ValueType> & expected_value, const std::string & testcase) {      
     
     auto param = persist_param_client_.read_server_parameter(param_name);
 
     ValueType val = param.get_value<ValueType>();
+    if (val != expected_value.value()) {
+      this->set_result(testcase, false);
+      throw SetOperationError();
+    }
 
-    return val == expected_value.value();
+    this->set_result(testcase, true);
   }
 
   /*

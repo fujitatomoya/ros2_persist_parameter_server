@@ -110,8 +110,6 @@ public:
   template <typename ValueType>
   bool modify_server_parameter(const std::string & param_name, const ValueType & param_value)
   {
-    bool ret = true;
-
     auto request = std::make_shared<rcl_interfaces::srv::SetParameters::Request>();
     request->parameters.push_back(
       rclcpp::Parameter(param_name, param_value).to_parameter_msg()
