@@ -124,7 +124,7 @@ int main(int argc, char ** argv)
       // Turn off the timer
       test_client->do_server_param_change_and_check<int64_t>("storing_period",
         0, 0, "p. Disable storing period");
-      // Make a change that should'nt be made persistent
+      // Make a change that shouldn't be made persistent
       test_client->do_change_and_check<std::string>(
         "persistent.a_string", std::string{"Kenobi"}, "q. Change persistent parameter");
 
