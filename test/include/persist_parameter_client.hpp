@@ -95,6 +95,44 @@ public:
     return ret;
   }
 
+  rclcpp::Parameter read_server_parameter(const std::string & param_name)
+  {
+    auto request = std::make_shared<rcl_interfaces::srv::GetParameters::Request>();
+    request->names.push_back(param_name);
+
+    auto future = get_server_param_client_->async_send_request(request);
+    rclcpp::spin_until_future_complete(this->get_node_base_interface(), future);
+
+    auto response = future.get();
+    return rclcpp::Parameter(param_name, response->values[0]);
+  }
+
+  template <typename ValueType>
+  bool modify_server_parameter(const std::string & param_name, const ValueType & param_value)
+  {
+    bool ret = true;
+
+    auto request = std::make_shared<rcl_interfaces::srv::SetParameters::Request>();
+    request->parameters.push_back(
+      rclcpp::Parameter(param_name, param_value).to_parameter_msg()
+    );
+
+    auto future = set_server_param_client_->async_send_request(request);
+    rclcpp::spin_until_future_complete(this->get_node_base_interface(), future);
+
+    auto response = future.get();
+    for (auto & result : response->results) {
+        if (!result.successful) {
+            RCLCPP_INFO(this->get_logger(),
+                "SET OPERATION : Failed to set server parameter: %s", result.reason.c_str());
+            return false;
+        }
+    }
+    RCLCPP_INFO(this->get_logger(),
+        "SET OPERATION : Set server parameter %s successfully.", param_name.c_str());
+    return true;
+  }
+
   inline std::shared_ptr<std_srvs::srv::Trigger::Response> trigger_save() {
     auto trigger = std::make_shared<std_srvs::srv::Trigger::Request>();
     auto fut = this->save_trigger_client_->async_send_request(trigger);
@@ -113,6 +151,8 @@ private:
    std::unique_ptr<rclcpp::SyncParametersClient> sync_param_client_;
    std::shared_ptr<rclcpp::Client<std_srvs::srv::Trigger>> save_trigger_client_;
    std::shared_ptr<rclcpp::Client<std_srvs::srv::Trigger>> reload_trigger_client_;
+   std::shared_ptr<rclcpp::Client<rcl_interfaces::srv::SetParameters>> set_server_param_client_;
+   std::shared_ptr<rclcpp::Client<rcl_interfaces::srv::GetParameters>> get_server_param_client_;
 };
 
 #endif
