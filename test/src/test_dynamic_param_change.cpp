@@ -15,6 +15,7 @@
 #include <map>
 #include <optional>
 #include <stdexcept>
+#include <thread>
 #include <type_traits>
 
 #include "persist_parameter_client.hpp"
@@ -68,16 +69,42 @@ int main(int argc, char ** argv)
 
     {
       RCLCPP_INFO(test_client->get_logger(), "Test storing timer gets dynamically turned on");
-      //Start with storing period at 0
-      test_client->do_read_server_param_and_check<int>("storing_period",
+      // Start with storing period at 0
+      test_client->do_read_server_param_and_check<int64_t>("storing_period",
         0, "g. Check initial storing period value");
       // Modify the parameter and check that it is changed
-      test_client->do_server_param_change_and_check<int>("storing_period",
-        5, 5, "h. Dynamically change the value of storing period");
+      test_client->do_server_param_change_and_check<int64_t>("storing_period",
+        2, 2, "h. Dynamically change the value of storing period");
       test_client->do_change_and_check<std::string>(
-        "persistent.a_string", std::string{"General"}, "c. Check that we can store parameters");
+        "persistent.a_string", std::string{"General"}, "i. Change persistent parameter");
 
+      // Wait for the timer to fire
+      std::this_thread::sleep_for(std::chrono::seconds(3));
+
+      // Reload from YAML and check the timer saved it
+      test_client->do_reload_and_check<std::string>(
+        "persistent.a_string", std::string{"General"}, std::string{"General"},
+        "j. Timer saved the value to disk");
     }
+
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Test storing timer can be modified");
+      // Start with storing period at 2
+      test_client->do_read_server_param_and_check<int64_t>("storing_period",
+        2, "k. Check initial storing period value");
+      // Modify the parameter and check that it is changed
+      test_client->do_server_param_change_and_check<int64_t>("storing_period",
+        30, 30, "l. Dynamically change the value of storing period");
+
+      // If the value hasn't been changed, the value should have been saved after 2 seconds
+      std::this_thread::sleep_for(std::chrono::seconds(3));
+
+      // Reload from YAML and check the timer didn't save it
+      test_client->do_reload_and_check<std::string>(
+        "persistent.a_string", std::string{"Kenobi"}, std::string{"General"},
+        "m. Timer didn't save the value to disk");
+    }
+
   } catch (const rclcpp::exceptions::RCLError & e) {
     ret_code = -1;
     RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
