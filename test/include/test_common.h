@@ -231,6 +231,12 @@ public:
     return do_read_server_param_and_check(param_name, expected_value, testcase);
   }
 
+  /*
+  * Check the value of a server parameter
+  * @param param_name The name of the server parameter.
+  * @param expected_value The value the parameter should have.
+  * @param testcase The test case description.
+  */
   template <typename ValueType>
   void do_read_server_param_and_check(const std::string & param_name, const std::optional<ValueType> & expected_value, const std::string & testcase) {      
     
