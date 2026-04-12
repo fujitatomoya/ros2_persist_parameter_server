@@ -48,7 +48,7 @@ int main(int argc, char ** argv)
         true, true, "b. Dynamically enable save on update");
       // Check that a modified value is saved on update
       test_client->do_change_and_check<std::string>(
-        "a_string", std::string{"Hi"}, "c. Check that save on update works");
+        "persistent.a_string", std::string{"Hi"}, "c. Check that save on update works");
     }
 
     {
@@ -61,9 +61,11 @@ int main(int argc, char ** argv)
         false, false, "e. Dynamically disable save on update");
       // Check that a modified value is not saved on update
       test_client->do_reload_and_check<std::string>(
-        "a_string", std::string{"there"}, std::string{"Hi"},
-        "f. Check that change is saved on update");
+        "persistent.a_string", std::string{"there"}, std::string{"Hi"},
+        "f. Check that change is not saved on update");
     }
+
+    
   } catch (const rclcpp::exceptions::RCLError & e) {
     ret_code = -1;
     RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
