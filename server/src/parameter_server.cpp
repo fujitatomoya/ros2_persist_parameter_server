@@ -135,7 +135,10 @@ ParameterServer::ParameterServer(
         this->get_logger(), "Allow dynamic typing param value changed to %s",
         p.as_bool() ? "true" : "false");
       allow_dynamic_typing_ = p.as_bool();
-      LoadYamlFile();
+      RCLCPP_WARN(
+        this->get_logger(),
+        "Changing allow_dynamic_typing at runtime only affects parameters declared after "
+        "this change; already-declared parameter descriptors are not updated automatically.");
     };
   dynamic_typing_callback_handle_ = server_param_subscriber_->add_parameter_callback(
     "allow_dynamic_typing",

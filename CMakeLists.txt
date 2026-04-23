@@ -29,6 +29,7 @@ find_package(rcutils REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(rmw REQUIRED)
+find_package(rcl_interfaces REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS program_options filesystem)
 find_package(yaml_cpp_vendor REQUIRED)
@@ -152,6 +153,7 @@ target_link_libraries(client_dynamic_param_change
   rclcpp::rclcpp
   rclcpp_components::component
   rcutils::rcutils
+  rcl_interfaces
   ${std_msgs_TARGETS}
   ${std_srvs_TARGETS}
 )

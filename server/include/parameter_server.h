@@ -45,7 +45,7 @@ private:
   // Initialize parameters value
   bool must_save_on_update_ = false;
   bool allow_dynamic_typing_ = false;
-  int storing_period = 0;
+  int64_t storing_period_ = 0;
   // Using custom yaml file same as yaml format of ros2 parameter as much as possible,
   // so use rcl_yaml_param_parser functions directly to load custom persistent yaml file.
   void LoadYamlFile();
