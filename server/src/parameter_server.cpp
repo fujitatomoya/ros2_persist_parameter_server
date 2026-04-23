@@ -76,8 +76,8 @@ ParameterServer::ParameterServer(
     if (param.get_name() == "allow_dynamic_typing") {
       allow_dynamic_typing_ = param.as_bool();
     }
-    if (param.get_name() == "storing_period") {
-      storing_period = param.as_int();
+    if (param.get_name() == "storing_period_") {
+      storing_period_ = param.as_int();
     }
     if (param.get_name() == "must_save_on_update") {
       this->must_save_on_update_ = param.as_bool();
@@ -96,25 +96,25 @@ ParameterServer::ParameterServer(
       "Save on update enabled. Parameters will be saved when set.");
   }
 
-  if (storing_period < 0) {
+  if (storing_period_ < 0) {
     RCLCPP_WARN(
       this->get_logger(),
-      "storing_period parameter value (%d) is not valid, treating as 0", storing_period);
-    storing_period = 0;
+      "storing_period_ parameter value (%d) is not valid, treating as 0", storing_period_);
+    storing_period_ = 0;
   }
 
-  if (!storing_period) {
+  if (!storing_period_) {
     RCLCPP_INFO(
       this->get_logger(), "Period is 0. Will not perform periodic persistent parameter storing");
   } else {
     timer_ = this->create_wall_timer(
-      std::chrono::seconds(storing_period), 
+      std::chrono::seconds(storing_period_), 
       std::bind(&ParameterServer::TimerCallback, this)
     );
 
     RCLCPP_INFO(
       this->get_logger(), "Will perform periodic persistent parameter storing every %ds",
-      storing_period);
+      storing_period_);
   }
 
   auto save_on_update_param_change_callback =
@@ -151,21 +151,21 @@ ParameterServer::ParameterServer(
       RCLCPP_INFO(
         this->get_logger(), "Storing period param value changed to %ld",
         p.as_int());
-      storing_period = p.as_int();
+      storing_period_ = p.as_int();
 
       if (timer_) {
         timer_->cancel();
         timer_.reset();
       }
-      if (storing_period > 0) {
+      if (storing_period_ > 0) {
         timer_ = this->create_wall_timer(
-          std::chrono::seconds(storing_period),
+          std::chrono::seconds(storing_period_),
           std::bind(&ParameterServer::TimerCallback, this)
         );
       }
     };
   storing_period_callback_handle_ = server_param_subscriber_->add_parameter_callback(
-    "storing_period",
+    "storing_period_",
     storing_period_param_change_callback
   );
 

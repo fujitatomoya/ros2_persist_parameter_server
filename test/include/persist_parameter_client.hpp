@@ -103,7 +103,13 @@ public:
     request->names.push_back(param_name);
 
     auto future = get_server_param_client_->async_send_request(request);
-    rclcpp::spin_until_future_complete(this->get_node_base_interface(), future);
+    auto rc = rclcpp::spin_until_future_complete(this->get_node_base_interface(), future, 5s);
+    if (rc != rclcpp::FutureReturnCode::SUCCESS) {
+      RCLCPP_ERROR(this->get_logger(),
+        "GET OPERATION : spin_until_future_complete failed (%s) for parameter: %s",
+        rclcpp::to_string(rc).c_str(), param_name.c_str());
+      return rclcpp::Parameter(param_name);
+    }
 
     auto response = future.get();
     return rclcpp::Parameter(param_name, response->values[0]);
@@ -118,7 +124,13 @@ public:
     );
 
     auto future = set_server_param_client_->async_send_request(request);
-    rclcpp::spin_until_future_complete(this->get_node_base_interface(), future);
+    auto rc = rclcpp::spin_until_future_complete(this->get_node_base_interface(), future, 5s);
+    if (rc != rclcpp::FutureReturnCode::SUCCESS) {
+      RCLCPP_ERROR(this->get_logger(),
+        "SET OPERATION : spin_until_future_complete failed (%s) for parameter: %s",
+        rclcpp::to_string(rc).c_str(), param_name.c_str());
+      return false;
+    }
 
     auto response = future.get();
     for (auto & result : response->results) {
@@ -136,14 +148,24 @@ public:
   inline std::shared_ptr<std_srvs::srv::Trigger::Response> trigger_save() {
     auto trigger = std::make_shared<std_srvs::srv::Trigger::Request>();
     auto fut = this->save_trigger_client_->async_send_request(trigger);
-    rclcpp::spin_until_future_complete(this->get_node_base_interface(), fut);
+    auto rc = rclcpp::spin_until_future_complete(this->get_node_base_interface(), fut, 5s);
+    if (rc != rclcpp::FutureReturnCode::SUCCESS) {
+      RCLCPP_ERROR(this->get_logger(),
+        "SAVE TRIGGER : spin_until_future_complete failed (%s)", rclcpp::to_string(rc).c_str());
+      return nullptr;
+    }
     return fut.get();
   }
 
   inline std::shared_ptr<std_srvs::srv::Trigger::Response> reload_yaml() {
     auto trigger = std::make_shared<std_srvs::srv::Trigger::Request>();
     auto fut = this->reload_trigger_client_->async_send_request(trigger);
-    rclcpp::spin_until_future_complete(this->get_node_base_interface(), fut);
+    auto rc = rclcpp::spin_until_future_complete(this->get_node_base_interface(), fut, 5s);
+    if (rc != rclcpp::FutureReturnCode::SUCCESS) {
+      RCLCPP_ERROR(this->get_logger(),
+        "RELOAD TRIGGER : spin_until_future_complete failed (%s)", rclcpp::to_string(rc).c_str());
+      return nullptr;
+    }
     return fut.get();
   }
 
