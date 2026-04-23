@@ -149,6 +149,10 @@ int main(int argc, char ** argv)
       // Dynamically enable allow_dynamic_typing
       test_client->do_server_param_change_and_check<bool>("allow_dynamic_typing",
         true, true, "u. Dynamically enable allow_dynamic_typing");
+      // Verify the same type change now succeeds with dynamic typing on
+      test_client->do_change_and_check<std::string>(
+        "persistent.some_int", std::string{"mutated"},
+        "v. Type change succeeds with dynamic typing on");
     }
 
   } catch (const rclcpp::exceptions::RCLError & e) {

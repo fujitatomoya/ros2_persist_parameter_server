@@ -99,7 +99,7 @@ ParameterServer::ParameterServer(
   if (storing_period_ < 0) {
     RCLCPP_WARN(
       this->get_logger(),
-      "storing_period_ parameter value (%d) is not valid, treating as 0", storing_period_);
+      "storing_period_ parameter value (%ld) is not valid, treating as 0", storing_period_);
     storing_period_ = 0;
   }
 
@@ -113,7 +113,7 @@ ParameterServer::ParameterServer(
     );
 
     RCLCPP_INFO(
-      this->get_logger(), "Will perform periodic persistent parameter storing every %ds",
+      this->get_logger(), "Will perform periodic persistent parameter storing every %lds",
       storing_period_);
   }
 
@@ -148,21 +148,30 @@ ParameterServer::ParameterServer(
   auto storing_period_param_change_callback =
     [this](const rclcpp::Parameter & p) {
 
+      const int64_t new_storing_period = p.as_int();
+
       RCLCPP_INFO(
-        this->get_logger(), "Storing period param value changed to %ld",
-        p.as_int());
-      storing_period_ = p.as_int();
+        this->get_logger(), "Storing period param value changed to %lld",
+        static_cast<long long>(new_storing_period));
 
       if (timer_) {
         timer_->cancel();
         timer_.reset();
       }
-      if (storing_period_ > 0) {
-        timer_ = this->create_wall_timer(
-          std::chrono::seconds(storing_period_),
-          std::bind(&ParameterServer::TimerCallback, this)
-        );
+
+      if (new_storing_period <= 0) {
+        storing_period_ = 0;
+        return;
+      } else {
+        RCLCPP_INFO(
+          this->get_logger(), "Storing period param value changed to %lld",
+          static_cast<long long>(new_storing_period));
       }
+
+      timer_ = this->create_wall_timer(
+        std::chrono::seconds(storing_period_),
+        std::bind(&ParameterServer::TimerCallback, this)
+      );
     };
   storing_period_callback_handle_ = server_param_subscriber_->add_parameter_callback(
     "storing_period_",

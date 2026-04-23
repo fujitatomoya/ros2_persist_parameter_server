@@ -121,7 +121,11 @@ return_code4 = client_process.wait()
 os.killpg(os.getpgid(server_process.pid), signal.SIGTERM)
 
 print("\nTest process finished.")
-print(f"Return Code: {return_code}")
+print("Return code summary:")
+print(f"  default options: {return_code}")
+print(f"  node options: {return_code2}")
+print(f"  save-on-update: {return_code3}")
+print(f"  dynamic param change: {return_code4}")
 
 # Check if the client process completed successfully
 if return_code == return_code2 == return_code3 == return_code4 == 0:

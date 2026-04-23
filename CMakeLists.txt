@@ -153,7 +153,7 @@ target_link_libraries(client_dynamic_param_change
   rclcpp::rclcpp
   rclcpp_components::component
   rcutils::rcutils
-  rcl_interfaces
+  ${rcl_interfaces_TARGETS}
   ${std_msgs_TARGETS}
   ${std_srvs_TARGETS}
 )
