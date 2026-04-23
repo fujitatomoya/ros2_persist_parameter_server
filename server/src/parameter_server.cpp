@@ -162,19 +162,16 @@ ParameterServer::ParameterServer(
       if (new_storing_period <= 0) {
         storing_period_ = 0;
         return;
-      } else {
-        RCLCPP_INFO(
-          this->get_logger(), "Storing period param value changed to %lld",
-          static_cast<long long>(new_storing_period));
       }
 
+      storing_period_ = new_storing_period;
       timer_ = this->create_wall_timer(
         std::chrono::seconds(storing_period_),
         std::bind(&ParameterServer::TimerCallback, this)
       );
     };
   storing_period_callback_handle_ = server_param_subscriber_->add_parameter_callback(
-    "storing_period_",
+    "storing_period",
     storing_period_param_change_callback
   );
 
