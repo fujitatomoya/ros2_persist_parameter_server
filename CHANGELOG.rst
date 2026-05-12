@@ -2,36 +2,6 @@
 Changelog for package persist_parameter_server
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
-* fix redundant and unexpected mergify configuration for barckports. (`#87 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/87>`_) (`#88 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/88>`_)
-  (cherry picked from commit 2808049817b89fc072cc3ad86ad26c100ab53272)
-  Co-authored-by: Tomoya Fujita <tomoya.fujita825@gmail.com>
-* Add save on update argument (`#73 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/73>`_) (`#83 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/83>`_)
-  * Add must save on update possibility
-  * Lint
-  * removed result as it is useless
-  * Update readme
-  * start test case
-  * Modified test cases
-  * Simplified cases
-  (cherry picked from commit c3db7fe97d946f2cf02b83465a5975f1896829a2)
-  Co-authored-by: Nicolas Daube <95172343+Nicodaube@users.noreply.github.com>
-* create downstream branches, apply corresponding changes to workflow. (`#79 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/79>`_) (`#80 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/80>`_)
-  (cherry picked from commit a4474d3ebe6ba90e7f4dbf556f83ba31043b1cf4)
-  Co-authored-by: Tomoya Fujita <tomoya.fujita825@gmail.com>
-* enable mergifyio and added appropriate labels. (`#75 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/75>`_) (`#76 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/76>`_)
-  * enable mergifyio and added appropriate labels.
-  * address Copilot review comments.
-  ---------
-  (cherry picked from commit dbaa5e7086e1923f68a194fb77ea62539df134c1)
-  Co-authored-by: Tomoya Fujita <tomoya.fujita825@gmail.com>
-* Upgrade github action/run-gemini-cli workflows. (`#71 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/71>`_)
-* doc,fix: link in readme pointing to valid URL (`#68 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/68>`_)
-  The URL to how to install ROS 2 has changed a while back.
-* enable actions/stale to close issues and PRs. (`#70 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/70>`_)
-* Contributors: Simon Gene Gottlieb, Tomoya Fujita, mergify[bot]
-
 1.0.4 (2025-12-20)
 ------------------
 * fix: save floats in explicit float notation (`#67 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/67>`_)
