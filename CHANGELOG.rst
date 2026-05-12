@@ -2,8 +2,8 @@
 Changelog for package persist_parameter_server
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.1.0 (2026-05-12)
+------------------
 * fix redundant and unexpected mergify configuration for barckports. (`#87 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/87>`_) (`#90 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/90>`_)
 * create downstream branches, apply corresponding changes to workflow. (`#79 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/79>`_) (`#82 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/82>`_)
 * enable mergifyio and added appropriate labels. (`#75 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/75>`_) (`#78 <https://github.com/fujitatomoya/ros2_persist_parameter_server/issues/78>`_)
