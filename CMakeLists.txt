@@ -1,5 +1,9 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.20)
 project(persist_parameter_server)
+
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
 
 # Set Release build if no build type was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -53,7 +57,8 @@ if (yaml-cpp_FOUND)
     yaml-cpp::yaml-cpp
     ${std_msgs_TARGETS}
     ${std_srvs_TARGETS}
-    ${Boost_LIBRARIES}
+    Boost::program_options
+    Boost::filesystem
   )
 else()
   message(STATUS "yaml-cpp package is less than version 0.8.0")
@@ -65,7 +70,8 @@ else()
     yaml-cpp
     ${std_msgs_TARGETS}
     ${std_srvs_TARGETS}
-    ${Boost_LIBRARIES}
+    Boost::program_options
+    Boost::filesystem
   )
 endif()
 
