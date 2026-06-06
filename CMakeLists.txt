@@ -57,7 +57,8 @@ if (yaml-cpp_FOUND)
     yaml-cpp::yaml-cpp
     ${std_msgs_TARGETS}
     ${std_srvs_TARGETS}
-    ${Boost_LIBRARIES}
+    Boost::program_options
+    Boost::filesystem
   )
 else()
   message(STATUS "yaml-cpp package is less than version 0.8.0")
@@ -69,7 +70,8 @@ else()
     yaml-cpp
     ${std_msgs_TARGETS}
     ${std_srvs_TARGETS}
-    ${Boost_LIBRARIES}
+    Boost::program_options
+    Boost::filesystem
   )
 endif()
 
