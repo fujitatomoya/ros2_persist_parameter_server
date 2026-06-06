@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.12)
 project(persist_parameter_server)
 
 if(POLICY CMP0167)
