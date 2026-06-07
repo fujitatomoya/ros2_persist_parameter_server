@@ -21,6 +21,7 @@
 #include <atomic>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp/version.h"
 #include "std_srvs/srv/trigger.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 #include "yaml-cpp/yaml.h"

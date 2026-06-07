@@ -24,6 +24,7 @@
 #include "rcl_yaml_param_parser/parser.h"
 #include "rclcpp/parameter.hpp"
 #include "rclcpp/parameter_map.hpp"
+#include "rclcpp/version.h"
 
 #define ROS_PARAMETER_KEY     "ros__parameters"
 #define ROS_PARAMETER_DOT_KEY "ros__parameters."
