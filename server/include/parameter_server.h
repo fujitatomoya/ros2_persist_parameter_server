@@ -21,6 +21,7 @@
 #include <atomic>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp/version.h"
 #include "std_srvs/srv/trigger.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 #include "yaml-cpp/yaml.h"
@@ -71,6 +72,13 @@ private:
 
   // set parameters callback handler
   OnSetParametersCallbackHandle::SharedPtr callback_handler_;
+<<<<<<< HEAD
+=======
+#if RCLCPP_VERSION_MAJOR >= 17
+  // PostSetParametersCallback is available in Iron (rclcpp 17.x) and later
+  PostSetParametersCallbackHandle::SharedPtr post_set_callback_handler_;
+#endif
+>>>>>>> 8784570 (Add ROS Humble compatibility for parameter callbacks (#91))
 
   // for periodic storing to the file system
   rclcpp::TimerBase::SharedPtr timer_;
