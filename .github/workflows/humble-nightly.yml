@@ -16,7 +16,7 @@ jobs:
         ROS_DISTRO: humble
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: humble
       - name: Build and Test with ROS humble
