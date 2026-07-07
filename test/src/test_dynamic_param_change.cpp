@@ -123,10 +123,10 @@ int main(int argc, char ** argv)
 
       // Turn off the timer
       test_client->do_server_param_change_and_check<int64_t>("storing_period",
-        0, 0, "p. Disable storing period");
+        0, 0, "q. Disable storing period");
       // Make a change that shouldn't be made persistent
       test_client->do_change_and_check<std::string>(
-        "persistent.a_string", std::string{"Kenobi"}, "q. Change persistent parameter");
+        "persistent.a_string", std::string{"Kenobi"}, "r. Change persistent parameter");
 
       // Wait 3s — no timer should fire
       std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -134,21 +134,21 @@ int main(int argc, char ** argv)
       // Reload from YAML and check the timer didn't save it
       test_client->do_reload_and_check<std::string>(
         "persistent.a_string", std::string{"Kenobi"}, std::string{"General"},
-        "r. Timer didn't save the value to disk");
+        "s. Timer didn't save the value to disk");
     }
 
     {
       RCLCPP_INFO(test_client->get_logger(), "Test allow_dynamic_typing param dynamic turn on");
       // Start with allow_dynamic_typing at false
       test_client->do_read_server_param_and_check<bool>("allow_dynamic_typing",
-        false, "s. Check initial allow_dynamic_typing value");
+        false, "t. Check initial allow_dynamic_typing value");
       // Verify type change fails with dynamic typing off
       test_client->do_fail_to_change<std::string>(
         "persistent.some_int", std::string{"mutated"},
-        "t. Type change fails with dynamic typing off");
+        "u. Type change fails with dynamic typing off");
       // Dynamically enable allow_dynamic_typing
       test_client->do_server_param_change_and_check<bool>("allow_dynamic_typing",
-        true, true, "u. Dynamically enable allow_dynamic_typing");
+        true, true, "v. Dynamically enable allow_dynamic_typing");
     }
 
   } catch (const rclcpp::exceptions::RCLError & e) {
