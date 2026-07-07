@@ -76,7 +76,7 @@ ParameterServer::ParameterServer(
     if (param.get_name() == "allow_dynamic_typing") {
       allow_dynamic_typing_ = param.as_bool();
     }
-    if (param.get_name() == "storing_period_") {
+    if (param.get_name() == "storing_period") {
       storing_period_ = param.as_int();
     }
     if (param.get_name() == "must_save_on_update") {
@@ -99,7 +99,7 @@ ParameterServer::ParameterServer(
   if (storing_period_ < 0) {
     RCLCPP_WARN(
       this->get_logger(),
-      "storing_period_ parameter value (%ld) is not valid, treating as 0", storing_period_);
+      "storing_period parameter value (%ld) is not valid, treating as 0", storing_period_);
     storing_period_ = 0;
   }
 
