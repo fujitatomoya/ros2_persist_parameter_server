@@ -112,6 +112,11 @@ public:
     }
 
     auto response = future.get();
+    if(response->values.empty()) {
+      RCLCPP_ERROR(this->get_logger(),
+      "GET OPERATION : No values in response for parameter %s", param_name.c_str());
+      return rclcpp::Parameter(param_name);
+    }
     return rclcpp::Parameter(param_name, response->values[0]);
   }
 
