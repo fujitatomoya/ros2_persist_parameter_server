@@ -243,7 +243,7 @@ public:
     auto param = persist_param_client_.read_server_parameter(param_name);
 
     ValueType val = param.get_value<ValueType>();
-    if (val != expected_value.value()) {
+    if (expected_value.has_value() && val != expected_value.value()) {
       this->set_result(testcase, false);
       throw SetOperationError();
     }
