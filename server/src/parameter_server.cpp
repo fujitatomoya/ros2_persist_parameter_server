@@ -31,6 +31,12 @@
 #define PERSISTENT_KEY        "persistent"
 #define PERSISTENT_DOT_KEY    "persistent."
 
+#if defined(_MSC_VER)
+#define PARAMETER_SERVER_FUNCTION __FUNCSIG__
+#else
+#define PARAMETER_SERVER_FUNCTION __PRETTY_FUNCTION__
+#endif
+
 /**
  * @brief Converts a double to string with proper floating-point representation.
  *
@@ -66,7 +72,8 @@ ParameterServer::ParameterServer(
   persistent_yaml_file_(persistent_yaml_file),
   node_name_(get_name())
 {
-  RCLCPP_DEBUG(this->get_logger(), "%s yaml:%s", __PRETTY_FUNCTION__, persistent_yaml_file_.c_str());
+  RCLCPP_DEBUG(
+    this->get_logger(), "%s yaml:%s", PARAMETER_SERVER_FUNCTION, persistent_yaml_file_.c_str());
 
   server_param_subscriber_ = std::make_shared<rclcpp::ParameterEventHandler>(this);
 
@@ -261,7 +268,7 @@ ParameterServer::ParameterServer(
 
 ParameterServer::~ParameterServer()
 {
-  RCLCPP_DEBUG(this->get_logger(), "%s", __PRETTY_FUNCTION__);
+  RCLCPP_DEBUG(this->get_logger(), "%s", PARAMETER_SERVER_FUNCTION);
   this->remove_on_set_parameters_callback(callback_handler_.get());
 #if RCLCPP_VERSION_MAJOR >= 17
   if (post_set_callback_handler_) {
@@ -300,7 +307,7 @@ void ParameterServer::CheckYamlFile() {
 }
 
 void ParameterServer::CheckYamlFile(const std::string& file) {
-  RCLCPP_DEBUG(this->get_logger(), "%s", __PRETTY_FUNCTION__);
+  RCLCPP_DEBUG(this->get_logger(), "%s", PARAMETER_SERVER_FUNCTION);
   YAML::Node parameter_config = YAML::LoadFile(file);
   // check format "YAML must be dictionary type and level 1 can only have one key"
   if ((parameter_config.size() == 1 && parameter_config.Type() != YAML::NodeType::Map) ||
@@ -348,7 +355,7 @@ void ParameterServer::CheckYamlFile(const std::string& file) {
 
 void ParameterServer::LoadYamlFile()
 {
-  RCLCPP_DEBUG(this->get_logger(), "%s", __PRETTY_FUNCTION__);
+  RCLCPP_DEBUG(this->get_logger(), "%s", PARAMETER_SERVER_FUNCTION);
   // check whether yaml file exist
   if (!boost::filesystem::exists(persistent_yaml_file_))
   {
@@ -629,7 +636,7 @@ void ParameterServer::SaveNode(YAML::Emitter& out, YAML::Node node, const std::s
 
 void ParameterServer::StoreYamlFile()
 {
-  RCLCPP_DEBUG(this->get_logger(), "%s", __PRETTY_FUNCTION__);
+  RCLCPP_DEBUG(this->get_logger(), "%s", PARAMETER_SERVER_FUNCTION);
 
   if (param_update_)
   {
@@ -837,7 +844,7 @@ void ParameterServer::StoreYamlFile()
 
 bool ParameterServer::CheckPersistentParam(const std::vector<rclcpp::Parameter> & parameters)
 {
-  RCLCPP_DEBUG(this->get_logger(), "%s", __PRETTY_FUNCTION__);
+  RCLCPP_DEBUG(this->get_logger(), "%s", PARAMETER_SERVER_FUNCTION);
   bool flag = false;
 
   for (auto& parameter : parameters) {
