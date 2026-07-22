@@ -167,16 +167,13 @@ ParameterServer::ParameterServer(
         timer_.reset();
       }
 
-      if (new_storing_period <= 0) {
-        storing_period_ = 0;
-        return;
-      }
-
       storing_period_ = new_storing_period;
-      timer_ = this->create_wall_timer(
-        std::chrono::seconds(storing_period_),
-        std::bind(&ParameterServer::TimerCallback, this)
-      );
+      if (storing_period_ > 0) {
+        timer_ = this->create_wall_timer(
+          std::chrono::seconds(storing_period_),
+          std::bind(&ParameterServer::TimerCallback, this)
+        );
+      }
     };
   storing_period_callback_handle_ = server_param_subscriber_->add_parameter_callback(
     "storing_period",
@@ -188,6 +185,13 @@ ParameterServer::ParameterServer(
     [this](const std::vector<rclcpp::Parameter> & parameters)
     {
       auto result = rcl_interfaces::msg::SetParametersResult();
+      for (const rclcpp::Parameter & param : parameters) {
+        if(param.get_name() == "storing_period" && param.as_int() < 0) {
+          result.successful = false;
+          result.reason = "Storing period cannot be a negative value.";
+          return result;
+        }
+      }
       result.successful = true;
 
       if (CheckPersistentParam(parameters))
