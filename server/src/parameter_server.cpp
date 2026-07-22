@@ -125,18 +125,6 @@ ParameterServer::ParameterServer(
       storing_period_);
   }
 
-  auto save_on_update_param_change_callback =
-    [this](const rclcpp::Parameter & p) {
-      RCLCPP_INFO(
-        this->get_logger(), "Save on update parameter value changed to %s",
-        p.as_bool() ? "true" : "false");
-      must_save_on_update_ = p.as_bool();
-    };
-  save_on_update_callback_handle_ = server_param_subscriber_->add_parameter_callback(
-    "must_save_on_update",
-    save_on_update_param_change_callback
-  );
-
   auto allow_dynamic_typing_param_change_callback =
     [this](const rclcpp::Parameter & p) {
       RCLCPP_INFO(
@@ -185,12 +173,22 @@ ParameterServer::ParameterServer(
     [this](const std::vector<rclcpp::Parameter> & parameters)
     {
       auto result = rcl_interfaces::msg::SetParametersResult();
+
+      // Check internal param values are valid
       for (const rclcpp::Parameter & param : parameters) {
         if(param.get_name() == "storing_period" && param.as_int() < 0) {
           result.successful = false;
           result.reason = "Storing period cannot be a negative value.";
           return result;
         }
+#if RCLCPP_VERSION_MAJOR < 17
+        if(param.get_name() == "must_save_on_update") {
+          RCLCPP_INFO(
+            this->get_logger(), "Save on update parameter value changed to %s",
+            param.as_bool() ? "true" : "false");
+          must_save_on_update_ = param.as_bool();
+        }
+#endif
       }
       result.successful = true;
 
@@ -222,6 +220,16 @@ ParameterServer::ParameterServer(
   auto post_param_change_callback =
     [this](const std::vector<rclcpp::Parameter> & parameters)
     {
+      // Update behavior based on the updated parameter
+      for (const rclcpp::Parameter & param : parameters) {
+        if(param.get_name() == "must_save_on_update") {
+          RCLCPP_INFO(
+            this->get_logger(), "Save on update parameter value changed to %s",
+            param.as_bool() ? "true" : "false");
+          must_save_on_update_ = param.as_bool();
+        }
+      }
+
       if (CheckPersistentParam(parameters))
       {
         if(must_save_on_update_)
