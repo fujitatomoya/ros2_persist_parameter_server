@@ -75,7 +75,9 @@ ParameterServer::ParameterServer(
   RCLCPP_DEBUG(
     this->get_logger(), "%s yaml:%s", PARAMETER_SERVER_FUNCTION, persistent_yaml_file_.c_str());
 
+#if RCLCPP_VERSION_MAJOR < 17
   server_param_subscriber_ = std::make_shared<rclcpp::ParameterEventHandler>(this);
+#endif
 
   // if automatically_declare_parameters_from_overrides is false, then the parameter_overrides will not be declared.
   // So it is safer to fetch the passed parameters directly from options.parameter_overrides()
@@ -125,6 +127,7 @@ ParameterServer::ParameterServer(
       storing_period_);
   }
 
+#if RCLCPP_VERSION_MAJOR < 17
   auto allow_dynamic_typing_param_change_callback =
     [this](const rclcpp::Parameter & p) {
       RCLCPP_INFO(
@@ -167,6 +170,7 @@ ParameterServer::ParameterServer(
     "storing_period",
     storing_period_param_change_callback
   );
+#endif
 
   // Declare a parameter change request callback
   auto param_change_callback =
@@ -227,6 +231,10 @@ ParameterServer::ParameterServer(
             this->get_logger(), "Save on update parameter value changed to %s",
             param.as_bool() ? "true" : "false");
           must_save_on_update_ = param.as_bool();
+        } else if(param.get_name() == "storing_period") {
+          updateStoringTimer(param);
+        } else if(param.get_name() == "allow_dynamic_typing") {
+          updateDynamicTyping(param);
         }
       }
 
@@ -293,6 +301,42 @@ ParameterServer::~ParameterServer()
 void ParameterServer::TimerCallback() {
   StoreYamlFile();
 }
+
+#if RCLCPP_VERSION_MAJOR >= 17
+void ParameterServer::updateStoringTimer(const rclcpp::Parameter & param)
+{
+  const int64_t new_storing_period = param.as_int();
+
+  RCLCPP_INFO(
+    this->get_logger(), "Storing period param value changed to %lld",
+    static_cast<long long>(new_storing_period));
+
+  if (timer_) {
+    timer_->cancel();
+    timer_.reset();
+  }
+
+  storing_period_ = new_storing_period;
+  if (storing_period_ > 0) {
+    timer_ = this->create_wall_timer(
+      std::chrono::seconds(storing_period_),
+      std::bind(&ParameterServer::TimerCallback, this)
+    );
+  }
+}
+
+void ParameterServer::updateDynamicTyping(const rclcpp::Parameter & param)
+{
+  RCLCPP_INFO(
+    this->get_logger(), "Allow dynamic typing param value changed to %s",
+    param.as_bool() ? "true" : "false");
+  allow_dynamic_typing_ = param.as_bool();
+  RCLCPP_WARN(
+    this->get_logger(),
+    "Changing allow_dynamic_typing at runtime only affects parameters declared after "
+    "this change; already-declared parameter descriptors are not updated automatically.");
+}
+#endif
 
 // Add a limitation that A node that is a map in custom YAML file can't contain '.' in the key name
 void ParameterServer::ValidateYamlFile(YAML::Node node, const std::string& key) {

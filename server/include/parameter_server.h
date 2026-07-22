@@ -38,10 +38,11 @@ public:
   ~ParameterServer();
 
 private:
+#if RCLCPP_VERSION_MAJOR < 17
   std::shared_ptr<rclcpp::ParameterEventHandler> server_param_subscriber_;
   std::shared_ptr<rclcpp::ParameterCallbackHandle> storing_period_callback_handle_;
   std::shared_ptr<rclcpp::ParameterCallbackHandle> dynamic_typing_callback_handle_;
-
+#endif
   // Initialize parameters value
   bool must_save_on_update_ = false;
   bool allow_dynamic_typing_ = false;
@@ -59,6 +60,10 @@ private:
   void CheckYamlFile(const std::string& file);
   void ValidateYamlFile(YAML::Node node, const std::string& key = "");
   void SaveNode(YAML::Emitter& out, YAML::Node node, const std::string& key = "");
+#if RCLCPP_VERSION_MAJOR >= 17
+  void updateStoringTimer(const rclcpp::Parameter & param);
+  void updateDynamicTyping(const rclcpp::Parameter & param);
+#endif
 
   // Check whether parameter name contains "persistent." in the parameter list
   bool CheckPersistentParam(const std::vector<rclcpp::Parameter> & parameters);
