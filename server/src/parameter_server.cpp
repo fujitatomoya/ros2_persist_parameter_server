@@ -130,14 +130,7 @@ ParameterServer::ParameterServer(
 #if RCLCPP_VERSION_MAJOR < 17
   auto allow_dynamic_typing_param_change_callback =
     [this](const rclcpp::Parameter & p) {
-      RCLCPP_INFO(
-        this->get_logger(), "Allow dynamic typing param value changed to %s",
-        p.as_bool() ? "true" : "false");
-      allow_dynamic_typing_ = p.as_bool();
-      RCLCPP_WARN(
-        this->get_logger(),
-        "Changing allow_dynamic_typing at runtime only affects parameters declared after "
-        "this change; already-declared parameter descriptors are not updated automatically.");
+      updateDynamicTyping(p);
     };
   dynamic_typing_callback_handle_ = server_param_subscriber_->add_parameter_callback(
     "allow_dynamic_typing",
@@ -146,26 +139,9 @@ ParameterServer::ParameterServer(
 
   auto storing_period_param_change_callback =
     [this](const rclcpp::Parameter & p) {
-
-      const int64_t new_storing_period = p.as_int();
-
-      RCLCPP_INFO(
-        this->get_logger(), "Storing period param value changed to %lld",
-        static_cast<long long>(new_storing_period));
-
-      if (timer_) {
-        timer_->cancel();
-        timer_.reset();
-      }
-
-      storing_period_ = new_storing_period;
-      if (storing_period_ > 0) {
-        timer_ = this->create_wall_timer(
-          std::chrono::seconds(storing_period_),
-          std::bind(&ParameterServer::TimerCallback, this)
-        );
-      }
+      updateStoringTimer(p);
     };
+
   storing_period_callback_handle_ = server_param_subscriber_->add_parameter_callback(
     "storing_period",
     storing_period_param_change_callback
@@ -302,7 +278,6 @@ void ParameterServer::TimerCallback() {
   StoreYamlFile();
 }
 
-#if RCLCPP_VERSION_MAJOR >= 17
 void ParameterServer::updateStoringTimer(const rclcpp::Parameter & param)
 {
   const int64_t new_storing_period = param.as_int();
@@ -336,7 +311,6 @@ void ParameterServer::updateDynamicTyping(const rclcpp::Parameter & param)
     "Changing allow_dynamic_typing at runtime only affects parameters declared after "
     "this change; already-declared parameter descriptors are not updated automatically.");
 }
-#endif
 
 // Add a limitation that A node that is a map in custom YAML file can't contain '.' in the key name
 void ParameterServer::ValidateYamlFile(YAML::Node node, const std::string& key) {

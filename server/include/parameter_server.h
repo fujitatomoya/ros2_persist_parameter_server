@@ -60,10 +60,8 @@ private:
   void CheckYamlFile(const std::string& file);
   void ValidateYamlFile(YAML::Node node, const std::string& key = "");
   void SaveNode(YAML::Emitter& out, YAML::Node node, const std::string& key = "");
-#if RCLCPP_VERSION_MAJOR >= 17
   void updateStoringTimer(const rclcpp::Parameter & param);
   void updateDynamicTyping(const rclcpp::Parameter & param);
-#endif
 
   // Check whether parameter name contains "persistent." in the parameter list
   bool CheckPersistentParam(const std::vector<rclcpp::Parameter> & parameters);
