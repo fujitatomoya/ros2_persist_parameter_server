@@ -152,25 +152,22 @@ ParameterServer::ParameterServer(
   auto param_change_callback =
     [this](const std::vector<rclcpp::Parameter> & parameters)
     {
-      auto result = rcl_interfaces::msg::SetParametersResult();
-
-      // Check internal param values are valid
-      for (const rclcpp::Parameter & param : parameters) {
-        if(param.get_name() == "storing_period" && param.as_int() < 0) {
-          result.successful = false;
-          result.reason = "Storing period cannot be a negative value.";
-          return result;
-        }
-#if RCLCPP_VERSION_MAJOR < 17
-        if(param.get_name() == "must_save_on_update") {
-          RCLCPP_INFO(
-            this->get_logger(), "Save on update parameter value changed to %s",
-            param.as_bool() ? "true" : "false");
-          must_save_on_update_ = param.as_bool();
-        }
-#endif
+      // Reject the whole set operation before any side effects are applied
+      auto result = checkValidParams(parameters);
+      if (!result.successful) {
+        return result;
       }
-      result.successful = true;
+
+#if RCLCPP_VERSION_MAJOR < 17
+      for (const rclcpp::Parameter & param : parameters) {
+          if(param.get_name() == "must_save_on_update") {
+            RCLCPP_INFO(
+              this->get_logger(), "Save on update parameter value changed to %s",
+              param.as_bool() ? "true" : "false");
+              must_save_on_update_ = param.as_bool();
+          }
+      }
+#endif
 
       if (CheckPersistentParam(parameters))
       {
@@ -276,6 +273,23 @@ ParameterServer::~ParameterServer()
 
 void ParameterServer::TimerCallback() {
   StoreYamlFile();
+}
+
+rcl_interfaces::msg::SetParametersResult ParameterServer::checkValidParams(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  auto result = rcl_interfaces::msg::SetParametersResult();
+
+  for (const rclcpp::Parameter & param : parameters) {
+    if(param.get_name() == "storing_period" && param.as_int() < 0) {
+      result.successful = false;
+      result.reason = "Storing period cannot be a negative value.";
+      return result;
+    }
+  }
+  result.successful = true;
+
+  return result;
 }
 
 void ParameterServer::updateStoringTimer(const rclcpp::Parameter & param)

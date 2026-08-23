@@ -62,6 +62,9 @@ private:
   void SaveNode(YAML::Emitter& out, YAML::Node node, const std::string& key = "");
   void updateStoringTimer(const rclcpp::Parameter & param);
   void updateDynamicTyping(const rclcpp::Parameter & param);
+  rcl_interfaces::msg::SetParametersResult checkValidParams(
+    const std::vector<rclcpp::Parameter> & parameters);
+
 
   // Check whether parameter name contains "persistent." in the parameter list
   bool CheckPersistentParam(const std::vector<rclcpp::Parameter> & parameters);
