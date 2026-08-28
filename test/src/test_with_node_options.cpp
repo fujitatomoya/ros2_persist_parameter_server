@@ -55,6 +55,7 @@ int main(int argc, char ** argv)
         "persistent.new_double", "3.14", "d. change the type of the new parameter to string");
     }
 
+    ret_code = test_client->print_result();
   } catch (const rclcpp::exceptions::RCLError & e) {
     ret_code = -1;
     RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
@@ -66,8 +67,6 @@ int main(int argc, char ** argv)
     RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
   }
 
-  // if any tests are not passed, return EXIT_FAILURE.
-  ret_code = test_client->print_result();
   rclcpp::shutdown();
 
   return ret_code;
