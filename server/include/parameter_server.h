@@ -37,6 +37,18 @@ public:
   ~ParameterServer();
 
 private:
+<<<<<<< HEAD
+=======
+#if RCLCPP_VERSION_MAJOR < 17
+  std::shared_ptr<rclcpp::ParameterEventHandler> server_param_subscriber_;
+  std::shared_ptr<rclcpp::ParameterCallbackHandle> storing_period_callback_handle_;
+  std::shared_ptr<rclcpp::ParameterCallbackHandle> dynamic_typing_callback_handle_;
+#endif
+  // Initialize parameters value
+  bool must_save_on_update_ = false;
+  bool allow_dynamic_typing_ = false;
+  int64_t storing_period_ = 0;
+>>>>>>> 894d65e (Enable dynamic server parameter change (#93))
   // Using custom yaml file same as yaml format of ros2 parameter as much as possible,
   // so use rcl_yaml_param_parser functions directly to load custom persistent yaml file.
   void LoadYamlFile();
@@ -50,6 +62,11 @@ private:
   void CheckYamlFile(const std::string& file);
   void ValidateYamlFile(YAML::Node node, const std::string& key = "");
   void SaveNode(YAML::Emitter& out, YAML::Node node, const std::string& key = "");
+  void updateStoringTimer(const rclcpp::Parameter & param);
+  void updateDynamicTyping(const rclcpp::Parameter & param);
+  rcl_interfaces::msg::SetParametersResult checkValidParams(
+    const std::vector<rclcpp::Parameter> & parameters);
+
 
   // Check whether parameter name contains "persistent." in the parameter list
   bool CheckPersistentParam(const std::vector<rclcpp::Parameter> & parameters);
@@ -74,8 +91,8 @@ private:
 
   // for periodic storing to the file system
   rclcpp::TimerBase::SharedPtr timer_;
+  void TimerCallback();
 
-  bool allow_dynamic_typing_ = false;
   // For manual triggering of save
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr save_trigger_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr reload_trigger_;
