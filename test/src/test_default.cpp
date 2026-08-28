@@ -165,6 +165,7 @@ int main(int argc, char ** argv)
         "persistent.mixed_notation_double_array", mixed_array,
         "u. Set and saved mixed notation double array successfully");
     }
+    ret_code = test_client->print_result();
 
   } catch (const rclcpp::exceptions::RCLError & e) {
     ret_code = -1;
@@ -176,9 +177,7 @@ int main(int argc, char ** argv)
     ret_code = -3;
     RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
   }
-
-  // if any tests are not passed, return EXIT_FAILURE.
-  ret_code = test_client->print_result();
+  
   rclcpp::shutdown();
 
   return ret_code;
