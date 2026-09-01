@@ -24,6 +24,7 @@
 #include "rcl_yaml_param_parser/parser.h"
 #include "rclcpp/parameter.hpp"
 #include "rclcpp/parameter_map.hpp"
+#include "rclcpp/version.h"
 
 #define ROS_PARAMETER_KEY     "ros__parameters"
 #define ROS_PARAMETER_DOT_KEY "ros__parameters."
@@ -74,7 +75,10 @@ ParameterServer::ParameterServer(
   RCLCPP_DEBUG(
     this->get_logger(), "%s yaml:%s", PARAMETER_SERVER_FUNCTION, persistent_yaml_file_.c_str());
 
-  int storing_period = 0;
+#if RCLCPP_VERSION_MAJOR < 17
+  server_param_subscriber_ = std::make_shared<rclcpp::ParameterEventHandler>(this);
+#endif
+
   // if automatically_declare_parameters_from_overrides is false, then the parameter_overrides will not be declared.
   // So it is safer to fetch the passed parameters directly from options.parameter_overrides()
   const std::vector<rclcpp::Parameter> & parameter_overrides = options.parameter_overrides();
@@ -83,7 +87,10 @@ ParameterServer::ParameterServer(
       allow_dynamic_typing_ = param.as_bool();
     }
     if (param.get_name() == "storing_period") {
-      storing_period = param.as_int();
+      storing_period_ = param.as_int();
+    }
+    if (param.get_name() == "must_save_on_update") {
+      this->must_save_on_update_ = param.as_bool();
     }
   }
 
@@ -93,35 +100,99 @@ ParameterServer::ParameterServer(
       "Dynamic typing enabled. Read persistent parameters will be dynamically typed.");
   }
 
-  if (storing_period < 0) {
-    RCLCPP_WARN(
+  if (must_save_on_update_) {
+    RCLCPP_INFO(
       this->get_logger(),
-      "storing_period parameter value (%d) is not valid, treating as 0", storing_period);
-    storing_period = 0;
+      "Save on update enabled. Parameters will be saved when set.");
   }
 
-  if (!storing_period) {
+  if (storing_period_ < 0) {
+    RCLCPP_WARN(
+      this->get_logger(),
+      "storing_period parameter value (%ld) is not valid, treating as 0", storing_period_);
+    storing_period_ = 0;
+  }
+
+  if (!storing_period_) {
     RCLCPP_INFO(
       this->get_logger(), "Period is 0. Will not perform periodic persistent parameter storing");
   } else {
     timer_ = this->create_wall_timer(
-      std::chrono::seconds(storing_period), 
-      [this]{ 
-        StoreYamlFile(); 
-      }
+      std::chrono::seconds(storing_period_), 
+      std::bind(&ParameterServer::TimerCallback, this)
     );
 
     RCLCPP_INFO(
-      this->get_logger(), "Will perform periodic persistent parameter storing every %ds",
-      storing_period);
+      this->get_logger(), "Will perform periodic persistent parameter storing every %lds",
+      storing_period_);
   }
+
+#if RCLCPP_VERSION_MAJOR < 17
+  auto allow_dynamic_typing_param_change_callback =
+    [this](const rclcpp::Parameter & p) {
+      updateDynamicTyping(p);
+    };
+  dynamic_typing_callback_handle_ = server_param_subscriber_->add_parameter_callback(
+    "allow_dynamic_typing",
+    allow_dynamic_typing_param_change_callback
+  );
+
+  auto storing_period_param_change_callback =
+    [this](const rclcpp::Parameter & p) {
+      updateStoringTimer(p);
+    };
+
+  storing_period_callback_handle_ = server_param_subscriber_->add_parameter_callback(
+    "storing_period",
+    storing_period_param_change_callback
+  );
+
+  // For ROS Humble (rclcpp 16.x) compatibility, handle save-on-update with a parameter
+  // event callback, since parameter events are published after the parameters are
+  // actually applied to the node. Post-set callbacks were added in Iron (rclcpp 17.x).
+  auto param_event_callback =
+    [this](const rcl_interfaces::msg::ParameterEvent & event) {
+      if (!must_save_on_update_ ||
+        event.node != std::string(this->get_fully_qualified_name()))
+      {
+        return;
+      }
+      std::vector<rclcpp::Parameter> params;
+      for (const rcl_interfaces::msg::Parameter & p : event.new_parameters) {
+        params.push_back(rclcpp::Parameter::from_parameter_msg(p));
+      }
+      for (const rcl_interfaces::msg::Parameter & p : event.changed_parameters) {
+        params.push_back(rclcpp::Parameter::from_parameter_msg(p));
+      }
+      if (CheckPersistentParam(params)) {
+        this->StoreYamlFile();
+      }
+    };
+  param_event_callback_handle_ = server_param_subscriber_->add_parameter_event_callback(
+    param_event_callback
+  );
+#endif
 
   // Declare a parameter change request callback
   auto param_change_callback =
     [this](const std::vector<rclcpp::Parameter> & parameters)
     {
-      auto result = rcl_interfaces::msg::SetParametersResult();
-      result.successful = true;
+      // Reject the whole set operation before any side effects are applied
+      auto result = checkValidParams(parameters);
+      if (!result.successful) {
+        return result;
+      }
+
+#if RCLCPP_VERSION_MAJOR < 17
+      for (const rclcpp::Parameter & param : parameters) {
+          if(param.get_name() == "must_save_on_update") {
+            RCLCPP_INFO(
+              this->get_logger(), "Save on update parameter value changed to %s",
+              param.as_bool() ? "true" : "false");
+              must_save_on_update_ = param.as_bool();
+          }
+      }
+#endif
 
       if (CheckPersistentParam(parameters))
       {
@@ -133,8 +204,39 @@ ParameterServer::ParameterServer(
 
       return result;
     };
+
   // callback_handler_ needs to be alive to keep the callback functional
   callback_handler_ = this->add_on_set_parameters_callback(param_change_callback);
+
+#if RCLCPP_VERSION_MAJOR >= 17
+  // Use post-set callback for Iron (rclcpp 17.x) and later distributions
+  auto post_param_change_callback =
+    [this](const std::vector<rclcpp::Parameter> & parameters)
+    {
+      // Update behavior based on the updated parameter
+      for (const rclcpp::Parameter & param : parameters) {
+        if(param.get_name() == "must_save_on_update") {
+          RCLCPP_INFO(
+            this->get_logger(), "Save on update parameter value changed to %s",
+            param.as_bool() ? "true" : "false");
+          must_save_on_update_ = param.as_bool();
+        } else if(param.get_name() == "storing_period") {
+          updateStoringTimer(param);
+        } else if(param.get_name() == "allow_dynamic_typing") {
+          updateDynamicTyping(param);
+        }
+      }
+
+      if (CheckPersistentParam(parameters))
+      {
+        if(must_save_on_update_)
+        {
+          this->StoreYamlFile();
+        }
+      }
+    };
+  post_set_callback_handler_ = this->add_post_set_parameters_callback(post_param_change_callback);
+#endif
 
   save_trigger_ = this->create_service<std_srvs::srv::Trigger>("~/save_params",
     [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr& req,
@@ -177,7 +279,67 @@ ParameterServer::~ParameterServer()
 {
   RCLCPP_DEBUG(this->get_logger(), "%s", PARAMETER_SERVER_FUNCTION);
   this->remove_on_set_parameters_callback(callback_handler_.get());
+#if RCLCPP_VERSION_MAJOR >= 17
+  if (post_set_callback_handler_) {
+    this->remove_post_set_parameters_callback(post_set_callback_handler_.get());
+  }
+#endif
   StoreYamlFile();
+}
+
+void ParameterServer::TimerCallback() {
+  StoreYamlFile();
+}
+
+rcl_interfaces::msg::SetParametersResult ParameterServer::checkValidParams(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  auto result = rcl_interfaces::msg::SetParametersResult();
+
+  for (const rclcpp::Parameter & param : parameters) {
+    if(param.get_name() == "storing_period" && param.as_int() < 0) {
+      result.successful = false;
+      result.reason = "Storing period cannot be a negative value.";
+      return result;
+    }
+  }
+  result.successful = true;
+
+  return result;
+}
+
+void ParameterServer::updateStoringTimer(const rclcpp::Parameter & param)
+{
+  const int64_t new_storing_period = param.as_int();
+
+  RCLCPP_INFO(
+    this->get_logger(), "Storing period param value changed to %lld",
+    static_cast<long long>(new_storing_period));
+
+  if (timer_) {
+    timer_->cancel();
+    timer_.reset();
+  }
+
+  storing_period_ = new_storing_period;
+  if (storing_period_ > 0) {
+    timer_ = this->create_wall_timer(
+      std::chrono::seconds(storing_period_),
+      std::bind(&ParameterServer::TimerCallback, this)
+    );
+  }
+}
+
+void ParameterServer::updateDynamicTyping(const rclcpp::Parameter & param)
+{
+  RCLCPP_INFO(
+    this->get_logger(), "Allow dynamic typing param value changed to %s",
+    param.as_bool() ? "true" : "false");
+  allow_dynamic_typing_ = param.as_bool();
+  RCLCPP_WARN(
+    this->get_logger(),
+    "Changing allow_dynamic_typing at runtime only affects parameters declared after "
+    "this change; already-declared parameter descriptors are not updated automatically.");
 }
 
 // Add a limitation that A node that is a map in custom YAML file can't contain '.' in the key name

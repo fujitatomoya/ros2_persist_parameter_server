@@ -58,6 +58,7 @@ public:
   }
 
   inline bool wait_param_server_ready() { return persist_param_client_.wait_param_server_ready(); }
+  inline PersistParametersClient & get_client() { return persist_param_client_; }
 
   /*
     * Read the value of parameter.
@@ -83,6 +84,13 @@ public:
           }
         } else {
           switch (param.get_type()) {
+            case rclcpp::ParameterType::PARAMETER_BOOL:
+              if constexpr (std::is_same_v<ValueType, bool>) {
+                if (param.as_bool() == expected_value.value()) {
+                  value_matches = true;
+                }
+              }
+              break;
             case rclcpp::ParameterType::PARAMETER_STRING:
               if constexpr (std::is_same_v<ValueType, std::string>) {
                 if (param.as_string() == expected_value.value()) {
@@ -202,6 +210,45 @@ public:
     }
 
     return do_read_and_check<ValueType>(param_name, expected_value, testcase);
+  }
+
+  /*
+  * Change the value of a server parameter, and then check it
+  * @param param_name The name of the server parameter.
+  * @param changed_value The value that you want to set.
+  * @param testcase The test case description.
+  */
+  template <typename ValueType>
+  void do_server_param_change_and_check(const std::string & param_name, const ValueType & changed_value, const std::optional<ValueType> & expected_value, const std::string & testcase) {      
+    bool ret = false;
+    ret = persist_param_client_.modify_server_parameter<ValueType>(param_name, changed_value);
+    
+    if(!ret) {
+      this->set_result(testcase, false);
+      throw SetOperationError();
+    }
+
+    return do_read_server_param_and_check(param_name, expected_value, testcase);
+  }
+
+  /*
+  * Check the value of a server parameter
+  * @param param_name The name of the server parameter.
+  * @param expected_value The value the parameter should have.
+  * @param testcase The test case description.
+  */
+  template <typename ValueType>
+  void do_read_server_param_and_check(const std::string & param_name, const std::optional<ValueType> & expected_value, const std::string & testcase) {      
+    
+    auto param = persist_param_client_.read_server_parameter(param_name);
+
+    ValueType val = param.get_value<ValueType>();
+    if (expected_value.has_value() && val != expected_value.value()) {
+      this->set_result(testcase, false);
+      throw SetOperationError();
+    }
+
+    this->set_result(testcase, true);
   }
 
   /*
