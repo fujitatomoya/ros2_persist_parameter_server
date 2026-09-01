@@ -146,6 +146,31 @@ ParameterServer::ParameterServer(
     "storing_period",
     storing_period_param_change_callback
   );
+
+  // For ROS Humble (rclcpp 16.x) compatibility, handle save-on-update with a parameter
+  // event callback, since parameter events are published after the parameters are
+  // actually applied to the node. Post-set callbacks were added in Iron (rclcpp 17.x).
+  auto param_event_callback =
+    [this](const rcl_interfaces::msg::ParameterEvent & event) {
+      if (!must_save_on_update_ ||
+        event.node != std::string(this->get_fully_qualified_name()))
+      {
+        return;
+      }
+      std::vector<rclcpp::Parameter> params;
+      for (const rcl_interfaces::msg::Parameter & p : event.new_parameters) {
+        params.push_back(rclcpp::Parameter::from_parameter_msg(p));
+      }
+      for (const rcl_interfaces::msg::Parameter & p : event.changed_parameters) {
+        params.push_back(rclcpp::Parameter::from_parameter_msg(p));
+      }
+      if (CheckPersistentParam(params)) {
+        this->StoreYamlFile();
+      }
+    };
+  param_event_callback_handle_ = server_param_subscriber_->add_parameter_event_callback(
+    param_event_callback
+  );
 #endif
 
   // Declare a parameter change request callback
@@ -175,15 +200,6 @@ ParameterServer::ParameterServer(
         {
           param_update_ = true;
         }
-
-#if RCLCPP_VERSION_MAJOR < 17
-        // For ROS Humble (rclcpp 16.x) compatibility, handle save-on-update in on-set callback
-        // Post-set callbacks were added in Iron (rclcpp 17.x) and later
-        if(must_save_on_update_)
-        {
-          this->StoreYamlFile();
-        }
-#endif
       }
 
       return result;

@@ -42,6 +42,7 @@ private:
   std::shared_ptr<rclcpp::ParameterEventHandler> server_param_subscriber_;
   std::shared_ptr<rclcpp::ParameterCallbackHandle> storing_period_callback_handle_;
   std::shared_ptr<rclcpp::ParameterCallbackHandle> dynamic_typing_callback_handle_;
+  std::shared_ptr<rclcpp::ParameterEventCallbackHandle> param_event_callback_handle_;
 #endif
   // Initialize parameters value
   bool must_save_on_update_ = false;
