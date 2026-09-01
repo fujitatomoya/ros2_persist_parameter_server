@@ -58,6 +58,7 @@ public:
   }
 
   inline bool wait_param_server_ready() { return persist_param_client_.wait_param_server_ready(); }
+  inline PersistParametersClient & get_client() { return persist_param_client_; }
 
   /*
     * Read the value of parameter.
@@ -83,6 +84,13 @@ public:
           }
         } else {
           switch (param.get_type()) {
+            case rclcpp::ParameterType::PARAMETER_BOOL:
+              if constexpr (std::is_same_v<ValueType, bool>) {
+                if (param.as_bool() == expected_value.value()) {
+                  value_matches = true;
+                }
+              }
+              break;
             case rclcpp::ParameterType::PARAMETER_STRING:
               if constexpr (std::is_same_v<ValueType, std::string>) {
                 if (param.as_string() == expected_value.value()) {

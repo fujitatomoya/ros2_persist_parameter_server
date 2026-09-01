@@ -24,6 +24,7 @@
 #include "rcl_yaml_param_parser/parser.h"
 #include "rclcpp/parameter.hpp"
 #include "rclcpp/parameter_map.hpp"
+#include "rclcpp/version.h"
 
 #define ROS_PARAMETER_KEY     "ros__parameters"
 #define ROS_PARAMETER_DOT_KEY "ros__parameters."
@@ -88,6 +89,9 @@ ParameterServer::ParameterServer(
     if (param.get_name() == "storing_period") {
       storing_period_ = param.as_int();
     }
+    if (param.get_name() == "must_save_on_update") {
+      this->must_save_on_update_ = param.as_bool();
+    }
   }
 
   if (allow_dynamic_typing_) {
@@ -96,9 +100,6 @@ ParameterServer::ParameterServer(
       "Dynamic typing enabled. Read persistent parameters will be dynamically typed.");
   }
 
-<<<<<<< HEAD
-  if (storing_period < 0) {
-=======
   if (must_save_on_update_) {
     RCLCPP_INFO(
       this->get_logger(),
@@ -106,7 +107,6 @@ ParameterServer::ParameterServer(
   }
 
   if (storing_period_ < 0) {
->>>>>>> 894d65e (Enable dynamic server parameter change (#93))
     RCLCPP_WARN(
       this->get_logger(),
       "storing_period parameter value (%ld) is not valid, treating as 0", storing_period_);
@@ -175,15 +175,23 @@ ParameterServer::ParameterServer(
         {
           param_update_ = true;
         }
+
+#if RCLCPP_VERSION_MAJOR < 17
+        // For ROS Humble (rclcpp 16.x) compatibility, handle save-on-update in on-set callback
+        // Post-set callbacks were added in Iron (rclcpp 17.x) and later
+        if(must_save_on_update_)
+        {
+          this->StoreYamlFile();
+        }
+#endif
       }
 
       return result;
     };
+
   // callback_handler_ needs to be alive to keep the callback functional
   callback_handler_ = this->add_on_set_parameters_callback(param_change_callback);
 
-<<<<<<< HEAD
-=======
 #if RCLCPP_VERSION_MAJOR >= 17
   // Use post-set callback for Iron (rclcpp 17.x) and later distributions
   auto post_param_change_callback =
@@ -214,7 +222,6 @@ ParameterServer::ParameterServer(
   post_set_callback_handler_ = this->add_post_set_parameters_callback(post_param_change_callback);
 #endif
 
->>>>>>> 894d65e (Enable dynamic server parameter change (#93))
   save_trigger_ = this->create_service<std_srvs::srv::Trigger>("~/save_params",
     [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr& req,
       [[maybe_unused]] const std_srvs::srv::Trigger::Response::SharedPtr& res
@@ -256,6 +263,11 @@ ParameterServer::~ParameterServer()
 {
   RCLCPP_DEBUG(this->get_logger(), "%s", PARAMETER_SERVER_FUNCTION);
   this->remove_on_set_parameters_callback(callback_handler_.get());
+#if RCLCPP_VERSION_MAJOR >= 17
+  if (post_set_callback_handler_) {
+    this->remove_post_set_parameters_callback(post_set_callback_handler_.get());
+  }
+#endif
   StoreYamlFile();
 }
 

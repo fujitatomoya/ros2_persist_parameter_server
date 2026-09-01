@@ -130,9 +130,6 @@ target_include_directories(client_with_node_options
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test/include>
 )
 
-<<<<<<< HEAD
-install(TARGETS client_default client_with_node_options DESTINATION lib/${PROJECT_NAME})
-=======
 add_executable(client_save_on_update
   test/src/test_save_on_update.cpp
   test/src/persist_parameter_client.cpp
@@ -173,7 +170,6 @@ target_include_directories(client_dynamic_param_change
 )
 
 install(TARGETS client_default client_with_node_options client_save_on_update client_dynamic_param_change DESTINATION lib/${PROJECT_NAME})
->>>>>>> 894d65e (Enable dynamic server parameter change (#93))
 
 # Install launch files.
 install(DIRECTORY

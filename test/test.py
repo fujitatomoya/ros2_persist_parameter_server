@@ -22,8 +22,6 @@ launchServerCmdWithNodeOptions = [
 launchClientCmdWithNodeOptions = [
     'ros2', 'run', 'persist_parameter_server', 'client_with_node_options']
 
-<<<<<<< HEAD
-=======
 launchServerCmdSaveOnUpdate = [
     'ros2', 'launch', 'persist_parameter_server', 'test.launch.py',
     'save_on_update:=true', 'storing_period:=0']
@@ -36,7 +34,6 @@ launchServerCmdDynamicParamChange = [
 launchClientCmdDynamicParamChange = [
     'ros2', 'run', 'persist_parameter_server', 'client_dynamic_param_change']
 
->>>>>>> 894d65e (Enable dynamic server parameter change (#93))
 if shutil.which('ros2') is None:
     print("source <colcon_ws>/install/setup.bash...then retry.")
     sys.exit(1)
@@ -93,8 +90,6 @@ print(f"Parameter Client Process started with PID: {client_process.pid}")
 return_code2 = client_process.wait()
 os.killpg(os.getpgid(server_process.pid), signal.SIGTERM)
 
-<<<<<<< HEAD
-=======
 print("\nTest with node options finished. Proceeding to testing save-on-update")
 
 # Start the server with save-on-update enabled
@@ -125,7 +120,6 @@ print(f"Parameter Client Process started with PID: {client_process.pid}")
 return_code4 = client_process.wait()
 os.killpg(os.getpgid(server_process.pid), signal.SIGTERM)
 
->>>>>>> 894d65e (Enable dynamic server parameter change (#93))
 print("\nTest process finished.")
 print("Return code summary:")
 print(f"  default options: {return_code}")
@@ -134,11 +128,7 @@ print(f"  save-on-update: {return_code3}")
 print(f"  dynamic param change: {return_code4}")
 
 # Check if the client process completed successfully
-<<<<<<< HEAD
-if return_code == return_code2 == 0:
-=======
 if return_code == return_code2 == return_code3 == return_code4 == 0:
->>>>>>> 894d65e (Enable dynamic server parameter change (#93))
     print("The process completed successfully.")
     sys.exit(0)
 else:

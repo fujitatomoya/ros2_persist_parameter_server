@@ -21,6 +21,7 @@
 #include <atomic>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp/version.h"
 #include "std_srvs/srv/trigger.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 #include "yaml-cpp/yaml.h"
@@ -37,8 +38,6 @@ public:
   ~ParameterServer();
 
 private:
-<<<<<<< HEAD
-=======
 #if RCLCPP_VERSION_MAJOR < 17
   std::shared_ptr<rclcpp::ParameterEventHandler> server_param_subscriber_;
   std::shared_ptr<rclcpp::ParameterCallbackHandle> storing_period_callback_handle_;
@@ -48,7 +47,6 @@ private:
   bool must_save_on_update_ = false;
   bool allow_dynamic_typing_ = false;
   int64_t storing_period_ = 0;
->>>>>>> 894d65e (Enable dynamic server parameter change (#93))
   // Using custom yaml file same as yaml format of ros2 parameter as much as possible,
   // so use rcl_yaml_param_parser functions directly to load custom persistent yaml file.
   void LoadYamlFile();
@@ -88,6 +86,10 @@ private:
 
   // set parameters callback handler
   OnSetParametersCallbackHandle::SharedPtr callback_handler_;
+#if RCLCPP_VERSION_MAJOR >= 17
+  // PostSetParametersCallback is available in Iron (rclcpp 17.x) and later
+  PostSetParametersCallbackHandle::SharedPtr post_set_callback_handler_;
+#endif
 
   // for periodic storing to the file system
   rclcpp::TimerBase::SharedPtr timer_;
