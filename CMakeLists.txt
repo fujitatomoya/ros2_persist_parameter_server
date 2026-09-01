@@ -33,6 +33,7 @@ find_package(rcutils REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(rmw REQUIRED)
+find_package(rcl_interfaces REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS program_options filesystem)
 find_package(yaml_cpp_vendor REQUIRED)
@@ -148,7 +149,27 @@ target_include_directories(client_save_on_update
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test/include>
 )
 
-install(TARGETS client_default client_with_node_options client_save_on_update DESTINATION lib/${PROJECT_NAME})
+add_executable(client_dynamic_param_change
+  test/src/test_dynamic_param_change.cpp
+  test/src/persist_parameter_client.cpp
+)
+
+target_link_libraries(client_dynamic_param_change
+  PUBLIC
+  rclcpp::rclcpp
+  rclcpp_components::component
+  rcutils::rcutils
+  ${rcl_interfaces_TARGETS}
+  ${std_msgs_TARGETS}
+  ${std_srvs_TARGETS}
+)
+
+target_include_directories(client_dynamic_param_change
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test/include>
+)
+
+install(TARGETS client_default client_with_node_options client_save_on_update client_dynamic_param_change DESTINATION lib/${PROJECT_NAME})
 
 # Install launch files.
 install(DIRECTORY

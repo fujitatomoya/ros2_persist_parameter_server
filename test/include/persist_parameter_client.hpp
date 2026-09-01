@@ -17,6 +17,8 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_srvs/srv/trigger.hpp"
+#include "rcl_interfaces/srv/get_parameters.hpp"
+#include "rcl_interfaces/srv/set_parameters.hpp"
 
 using namespace std::chrono_literals;
 
@@ -95,17 +97,80 @@ public:
     return ret;
   }
 
+  rclcpp::Parameter read_server_parameter(const std::string & param_name)
+  {
+    auto request = std::make_shared<rcl_interfaces::srv::GetParameters::Request>();
+    request->names.push_back(param_name);
+
+    auto future = get_server_param_client_->async_send_request(request);
+    auto rc = rclcpp::spin_until_future_complete(this->get_node_base_interface(), future, 5s);
+    if (rc != rclcpp::FutureReturnCode::SUCCESS) {
+      RCLCPP_ERROR(this->get_logger(),
+        "GET OPERATION : spin_until_future_complete failed (%s) for parameter: %s",
+        rclcpp::to_string(rc).c_str(), param_name.c_str());
+      return rclcpp::Parameter(param_name);
+    }
+
+    auto response = future.get();
+    if(response->values.empty()) {
+      RCLCPP_ERROR(this->get_logger(),
+      "GET OPERATION : No values in response for parameter %s", param_name.c_str());
+      return rclcpp::Parameter(param_name);
+    }
+    return rclcpp::Parameter(param_name, response->values[0]);
+  }
+
+  template <typename ValueType>
+  bool modify_server_parameter(const std::string & param_name, const ValueType & param_value)
+  {
+    auto request = std::make_shared<rcl_interfaces::srv::SetParameters::Request>();
+    request->parameters.push_back(
+      rclcpp::Parameter(param_name, param_value).to_parameter_msg()
+    );
+
+    auto future = set_server_param_client_->async_send_request(request);
+    auto rc = rclcpp::spin_until_future_complete(this->get_node_base_interface(), future, 5s);
+    if (rc != rclcpp::FutureReturnCode::SUCCESS) {
+      RCLCPP_ERROR(this->get_logger(),
+        "SET OPERATION : spin_until_future_complete failed (%s) for parameter: %s",
+        rclcpp::to_string(rc).c_str(), param_name.c_str());
+      return false;
+    }
+
+    auto response = future.get();
+    for (auto & result : response->results) {
+        if (!result.successful) {
+            RCLCPP_INFO(this->get_logger(),
+                "SET OPERATION : Failed to set server parameter: %s", result.reason.c_str());
+            return false;
+        }
+    }
+    RCLCPP_INFO(this->get_logger(),
+        "SET OPERATION : Set server parameter %s successfully.", param_name.c_str());
+    return true;
+  }
+
   inline std::shared_ptr<std_srvs::srv::Trigger::Response> trigger_save() {
     auto trigger = std::make_shared<std_srvs::srv::Trigger::Request>();
     auto fut = this->save_trigger_client_->async_send_request(trigger);
-    rclcpp::spin_until_future_complete(this->get_node_base_interface(), fut);
+    auto rc = rclcpp::spin_until_future_complete(this->get_node_base_interface(), fut, 5s);
+    if (rc != rclcpp::FutureReturnCode::SUCCESS) {
+      RCLCPP_ERROR(this->get_logger(),
+        "SAVE TRIGGER : spin_until_future_complete failed (%s)", rclcpp::to_string(rc).c_str());
+      return nullptr;
+    }
     return fut.get();
   }
 
   inline std::shared_ptr<std_srvs::srv::Trigger::Response> reload_yaml() {
     auto trigger = std::make_shared<std_srvs::srv::Trigger::Request>();
     auto fut = this->reload_trigger_client_->async_send_request(trigger);
-    rclcpp::spin_until_future_complete(this->get_node_base_interface(), fut);
+    auto rc = rclcpp::spin_until_future_complete(this->get_node_base_interface(), fut, 5s);
+    if (rc != rclcpp::FutureReturnCode::SUCCESS) {
+      RCLCPP_ERROR(this->get_logger(),
+        "RELOAD TRIGGER : spin_until_future_complete failed (%s)", rclcpp::to_string(rc).c_str());
+      return nullptr;
+    }
     return fut.get();
   }
 
@@ -113,6 +178,8 @@ private:
    std::unique_ptr<rclcpp::SyncParametersClient> sync_param_client_;
    std::shared_ptr<rclcpp::Client<std_srvs::srv::Trigger>> save_trigger_client_;
    std::shared_ptr<rclcpp::Client<std_srvs::srv::Trigger>> reload_trigger_client_;
+   std::shared_ptr<rclcpp::Client<rcl_interfaces::srv::SetParameters>> set_server_param_client_;
+   std::shared_ptr<rclcpp::Client<rcl_interfaces::srv::GetParameters>> get_server_param_client_;
 };
 
 #endif

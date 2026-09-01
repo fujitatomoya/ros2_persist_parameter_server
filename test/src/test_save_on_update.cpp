@@ -125,6 +125,7 @@ int main(int argc, char ** argv)
         "persistent.reload_test", std::string{"Changed"},
         "m. Change the parameter (also auto-saved)");
     }
+    ret_code = test_client->print_result();
 
   } catch (const rclcpp::exceptions::RCLError & e) {
     ret_code = -1;
@@ -137,8 +138,6 @@ int main(int argc, char ** argv)
     RCLCPP_ERROR(test_client->get_logger(), "unexpectedly failed: %s", e.what());
   }
 
-  // if any tests are not passed, return EXIT_FAILURE.
-  ret_code = test_client->print_result();
   rclcpp::shutdown();
 
   return ret_code;
