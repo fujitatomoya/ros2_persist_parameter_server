@@ -27,6 +27,8 @@ PersistParametersClient::PersistParametersClient(
   sync_param_client_ = std::make_unique<rclcpp::SyncParametersClient>(this, remote_node_name);
   save_trigger_client_ = create_client<std_srvs::srv::Trigger>(remote_node_name + "/save_params");
   reload_trigger_client_ = create_client<std_srvs::srv::Trigger>(remote_node_name + "/reload_params");
+  set_server_param_client_ = create_client<rcl_interfaces::srv::SetParameters>(remote_node_name + "/set_parameters");
+  get_server_param_client_ = create_client<rcl_interfaces::srv::GetParameters>(remote_node_name + "/get_parameters");
 }
 
 bool PersistParametersClient::read_parameter(const std::string & param_name, std::vector<rclcpp::Parameter> & parameter)
