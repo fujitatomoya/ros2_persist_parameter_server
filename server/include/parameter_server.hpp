@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef __PARAMETER_SERVER_H__
-#define __PARAMETER_SERVER_H__
+#ifndef PARAMETER_SERVER_HPP_
+#define PARAMETER_SERVER_HPP_
 
 #include <memory>
 #include <string>
 #include <sstream>
 #include <atomic>
+#include <set>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/version.h"
@@ -57,9 +59,9 @@ private:
 
   // To check whether yaml file is valid
   void CheckYamlFile();
-  void CheckYamlFile(const std::string& file);
-  void ValidateYamlFile(YAML::Node node, const std::string& key = "");
-  void SaveNode(YAML::Emitter& out, YAML::Node node, const std::string& key = "");
+  void CheckYamlFile(const std::string & file);
+  void ValidateYamlFile(YAML::Node node, const std::string & key = "");
+  void SaveNode(YAML::Emitter & out, YAML::Node node, const std::string & key = "");
   void updateStoringTimer(const rclcpp::Parameter & param);
   void updateDynamicTyping(const rclcpp::Parameter & param);
   rcl_interfaces::msg::SetParametersResult checkValidParams(
@@ -75,7 +77,8 @@ private:
   // yaml file to load/store
   std::string persistent_yaml_file_;
 
-  // store changed(add, update) parameter name contains "persistent." after checking in 'parameter_events' callback
+  // store changed(add, update) parameter name contains "persistent."
+  // after checking in 'parameter_events' callback
   std::set<std::string> changed_parameter_lists_;
 
   // To adapt the original yaml format that contain namespace(optional) and nodename(can be /**)
@@ -100,4 +103,4 @@ private:
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr reload_trigger_;
 };
 
-#endif // __PARAMETER_SERVER_H__
+#endif  // PARAMETER_SERVER_HPP_
