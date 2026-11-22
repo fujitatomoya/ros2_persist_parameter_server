@@ -107,13 +107,14 @@ protected:
 
   /// Start the parameter server node with the given options and wait until it is ready.
   void start_server(
-    bool allow_dynamic_typing = false, int storing_period = 0, bool save_on_update = false)
+    bool allow_dynamic_typing = false, int storing_period = 0, bool save_on_update = false,
+    bool allow_override = true)
   {
     ASSERT_EQ(server_, nullptr) << "server is already running";
 
     rclcpp::NodeOptions options = rclcpp::NodeOptions()
       .allow_undeclared_parameters(true)
-      .automatically_declare_parameters_from_overrides(true)
+      .automatically_declare_parameters_from_overrides(allow_override)
       .append_parameter_override("allow_dynamic_typing", allow_dynamic_typing)
       .append_parameter_override("storing_period", storing_period)
       .append_parameter_override("must_save_on_update", save_on_update);
@@ -150,10 +151,11 @@ protected:
   }
 
   void restart_server(
-    bool allow_dynamic_typing = false, int storing_period = 0, bool save_on_update = false)
+    bool allow_dynamic_typing = false, int storing_period = 0, bool save_on_update = false,
+    bool allow_override = true)
   {
     stop_server();
-    start_server(allow_dynamic_typing, storing_period, save_on_update);
+    start_server(allow_dynamic_typing, storing_period, save_on_update, allow_override);
   }
 
   /// Read `name` from the server and check that it holds `expected`.
@@ -415,11 +417,52 @@ TEST_F(ParameterServerTest, allow_dynamic_typing_can_be_changed_dynamically)
 
   expect_value<bool>("allow_dynamic_typing", false);
   EXPECT_FALSE(client_->modify_parameter("persistent.some_int", "mutated"));
-  change_and_check<bool>("allow_dynamic_typing", true);
 
-  // parameters loaded after the change are declared with dynamic typing.
-  ASSERT_NO_FATAL_FAILURE(restart_server(true));
+  // dynamically enable allow_dynamic_typing: the type change now succeeds,
+  // even though the parameter was declared before the change.
+  change_and_check<bool>("allow_dynamic_typing", true);
   change_and_check<std::string>("persistent.some_int", "mutated");
+  change_and_check<int64_t>("persistent.some_int", 1);
+
+  // dynamically disable allow_dynamic_typing: the type change is rejected again.
+  change_and_check<bool>("allow_dynamic_typing", false);
+  EXPECT_FALSE(client_->modify_parameter("persistent.some_int", "mutated"));
+  expect_value<int64_t>("persistent.some_int", 1);
+}
+
+TEST_F(ParameterServerTest, invalid_server_parameter_values_are_rejected)
+{
+  ASSERT_NO_FATAL_FAILURE(start_server(false, 0, false));
+
+  EXPECT_FALSE(client_->modify_parameter<int64_t>("storing_period", -1));
+  EXPECT_FALSE(client_->modify_parameter("storing_period", "invalid"));
+  EXPECT_FALSE(client_->modify_parameter<int64_t>("must_save_on_update", 1));
+  EXPECT_FALSE(client_->modify_parameter<int64_t>("allow_dynamic_typing", 1));
+  // the server configuration parameters cannot be deleted.
+  EXPECT_FALSE(client_->modify_parameter("storing_period", rclcpp::ParameterValue()));
+
+  // rejected requests must not change the server configuration.
+  expect_value<int64_t>("storing_period", 0);
+  expect_value<bool>("must_save_on_update", false);
+  expect_value<bool>("allow_dynamic_typing", false);
+}
+
+TEST_F(ParameterServerTest, server_parameters_are_declared_without_allow_override)
+{
+  // automatically_declare_parameters_from_overrides disabled:
+  // the server configuration parameters must still be declared and reconfigurable.
+  ASSERT_NO_FATAL_FAILURE(start_server(false, 0, true, false));
+
+  expect_value<int64_t>("storing_period", 0);
+  expect_value<bool>("allow_dynamic_typing", false);
+  expect_value<bool>("must_save_on_update", true);
+
+  change_and_check<bool>("must_save_on_update", false);
+  change_and_check<bool>("allow_dynamic_typing", true);
+  change_and_check<std::string>("persistent.some_int", "mutated");
+  EXPECT_FALSE(client_->modify_parameter<int64_t>("storing_period", -1));
+  change_and_check<int64_t>("storing_period", 2);
+  expect_value<int64_t>("storing_period", 2);
 }
 
 TEST_F(ParameterServerTest, missing_yaml_file_is_tolerated)

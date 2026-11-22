@@ -45,10 +45,31 @@ private:
   std::shared_ptr<rclcpp::ParameterCallbackHandle> storing_period_callback_handle_;
   std::shared_ptr<rclcpp::ParameterCallbackHandle> dynamic_typing_callback_handle_;
 #endif
-  // Initialize parameters value
+  // Server configuration parameters.
+  // These are declared as regular node parameters (see DeclareServerParameters),
+  // so that they can be inspected and reconfigured at runtime via the parameter API.
   bool must_save_on_update_ = false;
   bool allow_dynamic_typing_ = false;
   int64_t storing_period_ = 0;
+
+  // Declare the server configuration parameters with descriptors,
+  // unless they were already declared automatically from the parameter overrides.
+  void DeclareServerParameters();
+
+  // Declare a server configuration parameter if it is not declared yet, otherwise
+  // read the already declared value. Returns the effective value either way.
+  template<typename T>
+  T DeclareOrGetServerParameter(
+    const std::string & name,
+    const T & default_value,
+    const rcl_interfaces::msg::ParameterDescriptor & descriptor)
+  {
+    if (this->has_parameter(name)) {
+      // automatically_declare_parameters_from_overrides already declared it
+      return this->get_parameter(name).get_value<T>();
+    }
+    return this->declare_parameter<T>(name, default_value, descriptor);
+  }
   // Using custom yaml file same as yaml format of ros2 parameter as much as possible,
   // so use rcl_yaml_param_parser functions directly to load custom persistent yaml file.
   void LoadYamlFile();

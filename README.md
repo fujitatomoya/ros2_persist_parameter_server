@@ -16,6 +16,7 @@ See [overview slide deck](https://raw.githack.com/fujitatomoya/ros2_persist_para
       - [Persistent Prefix](#persistent-prefix)
       - [Scope Overview](#scope-overview)
     - [Configurable Options](#configurable-options)
+    - [Runtime Reconfiguration](#runtime-reconfiguration)
     - [Services](#services)
   - [Sequence](#sequence)
   - [Getting Started](#getting-started)
@@ -145,6 +146,29 @@ all of the configuration options will be passed via arguments as following.
     </tbody>
 </table>
 
+### Runtime Reconfiguration
+
+The following configuration options are declared as parameters of the parameter server node, so that they can be inspected and changed at runtime via the ROS 2 parameter API (e.g. `ros2 param get/set`) without restarting the parameter server.
+These parameters are always declared with the initial values given by the command line arguments, regardless of `--allow-override`.
+
+|  Parameter  |  Type  |  CLI  |  Description  |
+| ---- | ---- | ---- | ---- |
+|  `storing_period`  |  integer  |  `--storing-period`  |  Interval in seconds for periodically storing the persistent parameters. Setting it to 0 stops the periodic storing, and setting a positive value (re)starts the timer with the new period. Negative values and non-integer values are rejected.  |
+|  `allow_dynamic_typing`  |  bool  |  `--allow-dynamic-typing`  |  Allows the type of the parameters served by the parameter server to be changed after declaration. The typing policy is enforced by the parameter server itself, so that the change applies to all parameters including the ones that are already declared.  |
+|  `must_save_on_update`  |  bool  |  `--save-on-update`  |  Stores the persistent parameters to the file system each time one of them is changed.  |
+
+```console
+$ ros2 param set /parameter_server storing_period 10
+Set parameter successful
+$ ros2 param set /parameter_server storing_period -1
+Setting parameter failed: Storing period cannot be a negative value.
+$ ros2 param set /parameter_server allow_dynamic_typing true
+Set parameter successful
+```
+
+> [!NOTE]
+> These configuration parameters are not persistent parameters, so the values changed at runtime are not stored in the file system. Use the command line arguments to change the initial values.
+
 ### Services
 
 - `~/reload_params`: Reloads the parameters from the configuration file. This service allows dynamic reconfiguration of the node without requiring a restart. When called, the parameter server will reload the parameter values and apply them to the current operation.
@@ -272,7 +296,7 @@ These tests verify the following functions.
 - parameter type can be changed dynamically only when allow-dynamic-typing is set.
 - `~/save_params` and `~/reload_params` services store and reload the persistent parameters.
 - save-on-update stores the persistent parameters immediately when they are changed.
-- `must_save_on_update`, `storing_period` and `allow_dynamic_typing` server parameters can be changed at runtime.
+- server configuration parameters (`storing_period`, `allow_dynamic_typing` and `must_save_on_update`) can be reconfigured at runtime via the parameter API, and invalid values are rejected.
 - double and double array parameters keep their precision in the file system.
 - invalid persistent parameter file is rejected at startup.
 
@@ -291,7 +315,7 @@ All of the tests are listed with result as following.
 
 ```console
 ...<snip>
-[----------] 13 tests from ParameterServerTest
+[----------] 15 tests from ParameterServerTest
 [ RUN      ] ParameterServerTest.load_parameters_from_yaml_file
 [       OK ] ParameterServerTest.load_parameters_from_yaml_file (xx ms)
 [ RUN      ] ParameterServerTest.persistent_parameters_survive_restart
@@ -312,17 +336,21 @@ All of the tests are listed with result as following.
 [       OK ] ParameterServerTest.storing_period_can_be_changed_dynamically (xx ms)
 [ RUN      ] ParameterServerTest.allow_dynamic_typing_can_be_changed_dynamically
 [       OK ] ParameterServerTest.allow_dynamic_typing_can_be_changed_dynamically (xx ms)
+[ RUN      ] ParameterServerTest.invalid_server_parameter_values_are_rejected
+[       OK ] ParameterServerTest.invalid_server_parameter_values_are_rejected (xx ms)
+[ RUN      ] ParameterServerTest.server_parameters_are_declared_without_allow_override
+[       OK ] ParameterServerTest.server_parameters_are_declared_without_allow_override (xx ms)
 [ RUN      ] ParameterServerTest.missing_yaml_file_is_tolerated
 [       OK ] ParameterServerTest.missing_yaml_file_is_tolerated (xx ms)
 [ RUN      ] ParameterServerTest.yaml_file_keyed_by_node_name
 [       OK ] ParameterServerTest.yaml_file_keyed_by_node_name (xx ms)
 [ RUN      ] ParameterServerTest.invalid_yaml_file_throws
 [       OK ] ParameterServerTest.invalid_yaml_file_throws (xx ms)
-[----------] 13 tests from ParameterServerTest (xx ms total)
+[----------] 15 tests from ParameterServerTest (xx ms total)
 
 [----------] Global test environment tear-down
-[==========] 13 tests from 1 test suite ran. (xx ms total)
-[  PASSED  ] 13 tests.
+[==========] 15 tests from 1 test suite ran. (xx ms total)
+[  PASSED  ] 15 tests.
 ...<snip>
 Summary: xx tests, 0 errors, 0 failures, 0 skipped
 ```
