@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "parameter_server.h"
+#include "parameter_server.hpp"
 
 #include <chrono>
+#include <cinttypes>
 #include <fstream>
 #include <limits>
 #include <map>
@@ -60,7 +61,8 @@ static std::string convertDoubleToString(
   double v,
   const size_t precision = std::numeric_limits<double>::max_digits10)
 {
-  // Convert to string using stringstream with classic locale for consistent decimal point formatting
+  // Convert to string using stringstream with classic locale
+  // for consistent decimal point formatting
   auto ss = std::stringstream{};
   ss.imbue(std::locale::classic());
   ss << std::setprecision(precision) << v;
@@ -109,8 +111,7 @@ ParameterServer::ParameterServer(
   if (storing_period_ < 0 || storing_period_ > MAX_STORING_PERIOD_SEC) {
     RCLCPP_WARN(
       this->get_logger(),
-      "storing_period parameter value (%lld) is not valid, treating as 0",
-      static_cast<long long>(storing_period_));
+      "storing_period parameter value (%" PRId64 ") is not valid, treating as 0", storing_period_);
     storing_period_ = 0;
     // keep the declared parameter value consistent with the actual behavior
     this->set_parameter(rclcpp::Parameter(STORING_PERIOD_PARAM, storing_period_));
@@ -121,13 +122,13 @@ ParameterServer::ParameterServer(
       this->get_logger(), "Period is 0. Will not perform periodic persistent parameter storing");
   } else {
     timer_ = this->create_wall_timer(
-      std::chrono::seconds(storing_period_), 
+      std::chrono::seconds(storing_period_),
       std::bind(&ParameterServer::TimerCallback, this)
     );
 
     RCLCPP_INFO(
-      this->get_logger(), "Will perform periodic persistent parameter storing every %llds",
-      static_cast<long long>(storing_period_));
+      this->get_logger(), "Will perform periodic persistent parameter storing every %" PRId64 "s",
+      storing_period_);
   }
 
 #if RCLCPP_VERSION_MAJOR < 17
@@ -188,19 +189,17 @@ ParameterServer::ParameterServer(
 
 #if RCLCPP_VERSION_MAJOR < 17
       for (const rclcpp::Parameter & param : parameters) {
-          if(param.get_name() == MUST_SAVE_ON_UPDATE_PARAM) {
-            RCLCPP_INFO(
-              this->get_logger(), "Save on update parameter value changed to %s",
-              param.as_bool() ? "true" : "false");
-              must_save_on_update_ = param.as_bool();
-          }
+        if (param.get_name() == MUST_SAVE_ON_UPDATE_PARAM) {
+          RCLCPP_INFO(
+            this->get_logger(), "Save on update parameter value changed to %s",
+            param.as_bool() ? "true" : "false");
+          must_save_on_update_ = param.as_bool();
+        }
       }
 #endif
 
-      if (CheckPersistentParam(parameters))
-      {
-        if (!param_update_)
-        {
+      if (CheckPersistentParam(parameters)) {
+        if (!param_update_) {
           param_update_ = true;
         }
       }
@@ -218,22 +217,20 @@ ParameterServer::ParameterServer(
     {
       // Update behavior based on the updated parameter
       for (const rclcpp::Parameter & param : parameters) {
-        if(param.get_name() == MUST_SAVE_ON_UPDATE_PARAM) {
+        if (param.get_name() == MUST_SAVE_ON_UPDATE_PARAM) {
           RCLCPP_INFO(
             this->get_logger(), "Save on update parameter value changed to %s",
             param.as_bool() ? "true" : "false");
           must_save_on_update_ = param.as_bool();
-        } else if(param.get_name() == STORING_PERIOD_PARAM) {
+        } else if (param.get_name() == STORING_PERIOD_PARAM) {
           updateStoringTimer(param);
-        } else if(param.get_name() == ALLOW_DYNAMIC_TYPING_PARAM) {
+        } else if (param.get_name() == ALLOW_DYNAMIC_TYPING_PARAM) {
           updateDynamicTyping(param);
         }
       }
 
-      if (CheckPersistentParam(parameters))
-      {
-        if(must_save_on_update_)
-        {
+      if (CheckPersistentParam(parameters)) {
+        if (must_save_on_update_) {
           this->StoreYamlFile();
         }
       }
@@ -241,39 +238,41 @@ ParameterServer::ParameterServer(
   post_set_callback_handler_ = this->add_post_set_parameters_callback(post_param_change_callback);
 #endif
 
-  save_trigger_ = this->create_service<std_srvs::srv::Trigger>("~/save_params",
-    [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr& req,
-      [[maybe_unused]] const std_srvs::srv::Trigger::Response::SharedPtr& res
+  save_trigger_ = this->create_service<std_srvs::srv::Trigger>(
+    "~/save_params",
+    [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr & req,
+    [[maybe_unused]] const std_srvs::srv::Trigger::Response::SharedPtr & res
     ) {
       RCLCPP_INFO(this->get_logger(), "Parameter save manually requested");
       try {
         this->StoreYamlFile();
         res->success = true;
         res->message = "Parameters saved successfully";
-      } catch(const std::exception& ex) {
+      } catch (const std::exception & ex) {
         std::ostringstream ss;
         ss << "Parameters could not be saved. Error: " << ex.what();
         res->success = false;
         res->message = ss.str();
       }
-  });
+    });
 
-  reload_trigger_ = this->create_service<std_srvs::srv::Trigger>("~/reload_params",
-    [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr& req,
-      [[maybe_unused]] const std_srvs::srv::Trigger::Response::SharedPtr& res
+  reload_trigger_ = this->create_service<std_srvs::srv::Trigger>(
+    "~/reload_params",
+    [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr & req,
+    [[maybe_unused]] const std_srvs::srv::Trigger::Response::SharedPtr & res
     ) {
       RCLCPP_INFO(this->get_logger(), "Parameter reload manually requested");
       try {
         this->LoadYamlFile();
         res->success = true;
         res->message = "Parameters reloaded";
-      } catch(const std::exception& ex) {
+      } catch (const std::exception & ex) {
         std::ostringstream ss;
         ss << "Parameters could not be reloaded. Error: " << ex.what();
         res->success = false;
         res->message = ss.str();
       }
-  });
+    });
 
   LoadYamlFile();
 }
@@ -290,7 +289,8 @@ ParameterServer::~ParameterServer()
   StoreYamlFile();
 }
 
-void ParameterServer::TimerCallback() {
+void ParameterServer::TimerCallback()
+{
   StoreYamlFile();
 }
 
@@ -386,8 +386,8 @@ void ParameterServer::updateStoringTimer(const rclcpp::Parameter & param)
   const int64_t new_storing_period = param.as_int();
 
   RCLCPP_INFO(
-    this->get_logger(), "Storing period param value changed to %lld",
-    static_cast<long long>(new_storing_period));
+    this->get_logger(), "Storing period param value changed to %" PRId64,
+    new_storing_period);
 
   if (timer_) {
     timer_->cancel();
@@ -412,9 +412,9 @@ void ParameterServer::updateDynamicTyping(const rclcpp::Parameter & param)
 }
 
 // Add a limitation that A node that is a map in custom YAML file can't contain '.' in the key name
-void ParameterServer::ValidateYamlFile(YAML::Node node, const std::string& key) {
-  for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
-  {
+void ParameterServer::ValidateYamlFile(YAML::Node node, const std::string & key)
+{
+  for (YAML::const_iterator it = node.begin(); it != node.end(); ++it) {
     if (it->second.Type() == YAML::NodeType::Map) {
       std::string key_name = key;
       std::string tag = it->first.as<std::string>();
@@ -422,7 +422,8 @@ void ParameterServer::ValidateYamlFile(YAML::Node node, const std::string& key) 
       if (tag.find(".") != std::string::npos) {
         std::ostringstream ss;
         ss << "Custom YAML file '" << persistent_yaml_file_ << " format is invalid. "
-          << "[A node(" << key_name << ") that is a map in custom YAML file can't contain '.' in the key name";
+           << "[A node(" << key_name <<
+          ") that is a map in custom YAML file can't contain '.' in the key name";
         throw std::runtime_error(ss.str());
       }
 
@@ -431,18 +432,22 @@ void ParameterServer::ValidateYamlFile(YAML::Node node, const std::string& key) 
   }
 }
 
-void ParameterServer::CheckYamlFile() {
+void ParameterServer::CheckYamlFile()
+{
   CheckYamlFile(persistent_yaml_file_);
 }
 
-void ParameterServer::CheckYamlFile(const std::string& file) {
+void ParameterServer::CheckYamlFile(const std::string & file)
+{
   RCLCPP_DEBUG(this->get_logger(), "%s", PARAMETER_SERVER_FUNCTION);
   YAML::Node parameter_config = YAML::LoadFile(file);
   // check format "YAML must be dictionary type and level 1 can only have one key"
   if ((parameter_config.size() == 1 && parameter_config.Type() != YAML::NodeType::Map) ||
-      parameter_config.size() > 1) {
+    parameter_config.size() > 1)
+  {
     std::ostringstream ss;
-    ss << "Custom YAML file '" << file << " format is invalid. [YAML must be dictionary type and level 1 can only have one key]";
+    ss << "Custom YAML file '" << file <<
+      " format is invalid. [YAML must be dictionary type and level 1 can only have one key]";
     throw std::runtime_error(ss.str());
   }
 
@@ -462,8 +467,9 @@ void ParameterServer::CheckYamlFile(const std::string& file) {
 
       if (!parameter_name_exist_) {
         if (parameter_config[get_namespace()] &&
-            parameter_config[get_namespace()][node_name_] &&
-            parameter_config[get_namespace()][node_name_]["ros__parameters"]) {
+          parameter_config[get_namespace()][node_name_] &&
+          parameter_config[get_namespace()][node_name_]["ros__parameters"])
+        {
           parameter_ns_exist_ = true;
           parameter_name_exist_ = true;
         }
@@ -473,8 +479,9 @@ void ParameterServer::CheckYamlFile(const std::string& file) {
     if (!parameter_use_stars_ && !parameter_ns_exist_ && !parameter_name_exist_) {
       std::ostringstream ss;
       ss << "Custom YAML file '" << file
-        << " content is invalid. [namespace can be optional or '" << get_namespace() << "', but node name must be exist with a concrete name'"
-        << get_name() << "' or '/**']";
+         << " content is invalid. [namespace can be optional or '" << get_namespace() <<
+        "', but node name must be exist with a concrete name'"
+         << get_name() << "' or '/**']";
       throw std::runtime_error(ss.str());
     }
   }
@@ -486,8 +493,7 @@ void ParameterServer::LoadYamlFile()
 {
   RCLCPP_DEBUG(this->get_logger(), "%s", PARAMETER_SERVER_FUNCTION);
   // check whether yaml file exist
-  if (!boost::filesystem::exists(persistent_yaml_file_))
-  {
+  if (!boost::filesystem::exists(persistent_yaml_file_)) {
     RCLCPP_WARN(
       this->get_logger(),
       "Custom YAML file %s not exist", persistent_yaml_file_.c_str());
@@ -499,27 +505,24 @@ void ParameterServer::LoadYamlFile()
 
   // use rcl_yaml_param_parser to load custom yaml file
   rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base = this->get_node_base_interface();
-  rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_parameters = get_node_parameters_interface();
+  rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_parameters =
+    get_node_parameters_interface();
 
   // Get the node options
   const rcl_node_t * node = node_base->get_rcl_node_handle();
-  if (nullptr == node)
-  {
+  if (nullptr == node) {
     throw std::runtime_error("Need valid node handle in NodeParameters");
   }
   const rcl_node_options_t * options = rcl_node_get_options(node);
-  if (nullptr == options)
-  {
+  if (nullptr == options) {
     throw std::runtime_error("Need valid node options in NodeParameters");
   }
 
   rcl_params_t * yaml_params = rcl_yaml_node_struct_init(options->allocator);
-  if (nullptr == yaml_params)
-  {
+  if (nullptr == yaml_params) {
     throw std::bad_alloc();
   }
-  if (!rcl_parse_yaml_file(persistent_yaml_file_.c_str(), yaml_params))
-  {
+  if (!rcl_parse_yaml_file(persistent_yaml_file_.c_str(), yaml_params)) {
     std::ostringstream ss;
     ss << "Failed to parse parameters from custom yaml file '" << persistent_yaml_file_ << "': " <<
       rcl_get_error_string().str;
@@ -530,21 +533,17 @@ void ParameterServer::LoadYamlFile()
   rclcpp::ParameterMap initial_map = rclcpp::parameter_map_from(yaml_params);
   rcl_yaml_node_struct_fini(yaml_params);
 
-  for (auto iter = initial_map.begin(); initial_map.end() != iter; iter++)
-  {
-    if (iter->first == "/**" || iter->first == node_base->get_fully_qualified_name())
-    {
+  for (auto iter = initial_map.begin(); initial_map.end() != iter; iter++) {
+    if (iter->first == "/**" || iter->first == node_base->get_fully_qualified_name()) {
       // set (add, update) parameter with custom yaml file
-      for (auto & param : iter->second)
-      {
+      for (auto & param : iter->second) {
         std::string name = param.get_name();
         rclcpp::ParameterValue value = rclcpp::ParameterValue(param.get_value_message());
 
         bool has_parameter_flag = node_parameters->has_parameter(name);
         bool undeclare_exist_override = false;
 
-        if (!has_parameter_flag)
-        {
+        if (!has_parameter_flag) {
           // declare parameter
           RCLCPP_DEBUG(this->get_logger(), "declare %s %s", name.c_str(), to_string(value).c_str());
           // Always declare as dynamically typed in rclcpp. The typing policy is enforced
@@ -558,28 +557,29 @@ void ParameterServer::LoadYamlFile()
           // parameter from __params: not declared but saved in overrides list,
           // to check "has_parameter" return false and
           // to call "declare_parameter" will use value of overrides list to replace passed value.
-          // 2. custom yaml file need to override whatever the automatically_declare_parameters_from_overrides is,
+          // 2. custom yaml file need to override whatever
+          // the automatically_declare_parameters_from_overrides is,
           // continue to check if name exist in overrides, if yes, set_parameters later
-          const std::map<std::string, rclcpp::ParameterValue> &om = node_parameters->get_parameter_overrides();
-          if (om.find(name) != om.end())
-          {
+          const std::map<std::string,
+            rclcpp::ParameterValue> & om = node_parameters->get_parameter_overrides();
+          if (om.find(name) != om.end()) {
             undeclare_exist_override = true;
           }
         }
 
-        if (has_parameter_flag || undeclare_exist_override)
-        {
-          RCLCPP_DEBUG(this->get_logger(), "set %s %s (has_parameter_flag:%d, undeclare_exist_override:%d",
+        if (has_parameter_flag || undeclare_exist_override) {
+          RCLCPP_DEBUG(
+            this->get_logger(),
+            "set %s %s (has_parameter_flag:%d, undeclare_exist_override:%d",
             name.c_str(), to_string(value).c_str(),
             has_parameter_flag, undeclare_exist_override);
 
-          auto set_parameters_results = node_parameters->set_parameters({
+          auto set_parameters_results = node_parameters->set_parameters(
+          {
             rclcpp::Parameter(name, value)
           });
-          for (auto & result : set_parameters_results)
-          {
-            if (!result.successful)
-            {
+          for (auto & result : set_parameters_results) {
+            if (!result.successful) {
               RCLCPP_WARN(
                 get_logger(),
                 "Failed to set parameter: %s", result.reason.c_str());
@@ -594,44 +594,32 @@ void ParameterServer::LoadYamlFile()
 template<typename T, typename Iter>
 void setConfigParam(YAML::Node node, Iter begin, Iter end, T value)
 {
-  if (begin == end)
-  {
+  if (begin == end) {
     return;
   }
   auto tag = *begin;
 
-  if (std::next(begin) == end)
-  {
-    if constexpr (std::is_same_v<T, double>)
-    {
+  if (std::next(begin) == end) {
+    if constexpr (std::is_same_v<T, double>) {
       node[tag] = convertDoubleToString(value);
-    }
-    else
-    {
+    } else {
       node[tag] = value;
     }
     return;
   }
-  if (!node[tag])
-  {
+  if (!node[tag]) {
     node[tag] = YAML::Node(YAML::NodeType::Map);
-  }
-  else
-  {
+  } else {
     // if tag is not map, set all left tags as a key with the value
-    if (node[tag].Type() != YAML::NodeType::Map)
-    {
+    if (node[tag].Type() != YAML::NodeType::Map) {
       while (true) {
         ++begin;
         tag += "." + *begin;
 
         if (std::next(begin) == end) {
-          if constexpr (std::is_same_v<T, double>)
-          {
+          if constexpr (std::is_same_v<T, double>) {
             node[tag] = convertDoubleToString(value);
-          }
-          else
-          {
+          } else {
             node[tag] = value;
           }
           return;
@@ -644,34 +632,27 @@ void setConfigParam(YAML::Node node, Iter begin, Iter end, T value)
 }
 
 template<typename T>
-void updateConfigParam(YAML::Node node, const std::vector<std::string>& key_name_list, T value)
+void updateConfigParam(YAML::Node node, const std::vector<std::string> & key_name_list, T value)
 {
   setConfigParam(node, key_name_list.begin(), key_name_list.end(), value);
 }
 
-void ParameterServer::SaveNode(YAML::Emitter& out, YAML::Node node, const std::string& key)
+void ParameterServer::SaveNode(YAML::Emitter & out, YAML::Node node, const std::string & key)
 {
   out << YAML::BeginMap;
-  for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
-  {
+  for (YAML::const_iterator it = node.begin(); it != node.end(); ++it) {
     out << YAML::Key << it->first;
 
     std::string key_name;
-    if (key.empty())
-    {
+    if (key.empty()) {
       key_name = it->first.as<std::string>();
-    }
-    else
-    {
+    } else {
       key_name = key + "." + it->first.as<std::string>();
     }
 
-    if (it->second.Type() == YAML::NodeType::Map)
-    {
+    if (it->second.Type() == YAML::NodeType::Map) {
       SaveNode(out, it->second, key_name);
-    }
-    else
-    {
+    } else {
       std::string ros_parameter_key = ROS_PARAMETER_DOT_KEY;
       std::size_t pos = key_name.find(ros_parameter_key + PERSISTENT_DOT_KEY);
       if (pos == std::string::npos) {
@@ -682,83 +663,85 @@ void ParameterServer::SaveNode(YAML::Emitter& out, YAML::Node node, const std::s
         std::string name = key_name.substr(pos + ros_parameter_key.length());
         // get key type of parameter
         rclcpp::Parameter parameter = get_parameter(name);
-        switch (parameter.get_type())
-        {
+        switch (parameter.get_type()) {
           case rclcpp::ParameterType::PARAMETER_NOT_SET:
-          {
-            RCLCPP_INFO(this->get_logger(), "parameter %s not set(or deleted), it will not be stored", name.c_str());
-            break;
-          }
+            {
+              RCLCPP_INFO(
+                this->get_logger(),
+                "parameter %s not set(or deleted), it will not be stored", name.c_str());
+              break;
+            }
           case rclcpp::ParameterType::PARAMETER_BOOL:
-          {
-            bool value = parameter.as_bool();
-            out << YAML::Value << value;
-            break;
-          }
+            {
+              bool value = parameter.as_bool();
+              out << YAML::Value << value;
+              break;
+            }
           case rclcpp::ParameterType::PARAMETER_INTEGER:
-          {
-            int64_t value = parameter.as_int();
-            out << YAML::Value << value;
-            break;
-          }
+            {
+              int64_t value = parameter.as_int();
+              out << YAML::Value << value;
+              break;
+            }
           case rclcpp::ParameterType::PARAMETER_DOUBLE:
-          {
-            double value = parameter.as_double();
-            out << YAML::Value << convertDoubleToString(value);
-            break;
-          }
+            {
+              double value = parameter.as_double();
+              out << YAML::Value << convertDoubleToString(value);
+              break;
+            }
           case rclcpp::ParameterType::PARAMETER_STRING:
-          {
-            std::string value = parameter.as_string();
-            out << YAML::Value << YAML::SingleQuoted << value;
-            break;
-          }
+            {
+              std::string value = parameter.as_string();
+              out << YAML::Value << YAML::SingleQuoted << value;
+              break;
+            }
           case rclcpp::ParameterType::PARAMETER_BYTE_ARRAY:
-          {
-            // TODO. rcl_yaml_param_parser not support byte array, use int array temporary
-            auto array = parameter.as_byte_array();
-            std::vector<int64_t> int_array;
-            for (uint8_t b: array) {
-              int_array.push_back(int64_t(b));
+            {
+              // TODO(fujitatomoya): rcl_yaml_param_parser does not support byte array,
+              // use int array temporarily
+              auto array = parameter.as_byte_array();
+              std::vector<int64_t> int_array;
+              for (uint8_t b : array) {
+                int_array.push_back(int64_t(b));
+              }
+              out << YAML::Value << YAML::Flow << int_array;
+              break;
             }
-            out << YAML::Value << YAML::Flow << int_array;
-            break;
-          }
           case rclcpp::ParameterType::PARAMETER_BOOL_ARRAY:
-          {
-            auto array = parameter.as_bool_array();
-            out << YAML::Value << YAML::Flow << array;
-            break;
-          }
-          case rclcpp::ParameterType::PARAMETER_INTEGER_ARRAY:
-          {
-            auto array = parameter.as_integer_array();
-            out << YAML::Value << YAML::Flow << array;
-            break;
-          }
-          case rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY:
-          {
-            auto array = parameter.as_double_array();
-            std::vector<std::string> str_array;
-            for (auto v : array) {
-                str_array.push_back(convertDoubleToString(v));
+            {
+              auto array = parameter.as_bool_array();
+              out << YAML::Value << YAML::Flow << array;
+              break;
             }
-            out << YAML::Value << YAML::Flow << str_array;
-            break;
-          }
+          case rclcpp::ParameterType::PARAMETER_INTEGER_ARRAY:
+            {
+              auto array = parameter.as_integer_array();
+              out << YAML::Value << YAML::Flow << array;
+              break;
+            }
+          case rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY:
+            {
+              auto array = parameter.as_double_array();
+              std::vector<std::string> str_array;
+              for (auto v : array) {
+                str_array.push_back(convertDoubleToString(v));
+              }
+              out << YAML::Value << YAML::Flow << str_array;
+              break;
+            }
           case rclcpp::ParameterType::PARAMETER_STRING_ARRAY:
-          {
-            auto array = parameter.as_string_array();
-            out << YAML::Value << YAML::Flow << YAML::SingleQuoted << array;
-            break;
-          }
+            {
+              auto array = parameter.as_string_array();
+              out << YAML::Value << YAML::Flow << YAML::SingleQuoted << array;
+              break;
+            }
           default: {
-            RCLCPP_WARN(
-              this->get_logger(),
-              "parameter %s unsupported type %d",
-              name.c_str(), parameter.get_type());
-            break;
-          }
+              RCLCPP_WARN(
+                this->get_logger(),
+                "parameter %s unsupported type %d",
+                name.c_str(), parameter.get_type());
+              break;
+            }
         }
       }
     }
@@ -770,18 +753,15 @@ void ParameterServer::StoreYamlFile()
 {
   RCLCPP_DEBUG(this->get_logger(), "%s", PARAMETER_SERVER_FUNCTION);
 
-  if (param_update_)
-  {
+  if (param_update_) {
     // Store yaml at finalization
     YAML::Node parameter_config;
-    if (boost::filesystem::exists(persistent_yaml_file_))
-    {
+    if (boost::filesystem::exists(persistent_yaml_file_)) {
       parameter_config = YAML::LoadFile(persistent_yaml_file_);
     }
 
     // if file is empty or bad format, reset it to map
-    if (parameter_config.Type() != YAML::NodeType::Map)
-    {
+    if (parameter_config.Type() != YAML::NodeType::Map) {
       parameter_config = YAML::Node(YAML::NodeType::Map);
     }
 
@@ -810,137 +790,134 @@ void ParameterServer::StoreYamlFile()
 
       rclcpp::Parameter parameter = get_parameter(name);
 
-      switch (parameter.get_type())
-      {
+      switch (parameter.get_type()) {
         case rclcpp::ParameterType::PARAMETER_NOT_SET:
-        {
-          RCLCPP_INFO(this->get_logger(), "parameter %s is not set, it will not be stored", name.c_str());
-          break;
-        }
+          {
+            RCLCPP_INFO(
+              this->get_logger(), "parameter %s is not set, it will not be stored",
+              name.c_str());
+            break;
+          }
         case rclcpp::ParameterType::PARAMETER_BOOL:
-        {
-          bool value = parameter.as_bool();
-          updateConfigParam(node_parameter, key_name_list, value);
-          break;
-        }
+          {
+            bool value = parameter.as_bool();
+            updateConfigParam(node_parameter, key_name_list, value);
+            break;
+          }
         case rclcpp::ParameterType::PARAMETER_INTEGER:
-        {
-          int64_t value = parameter.as_int();
-          updateConfigParam(node_parameter, key_name_list, value);
-          break;
-        }
+          {
+            int64_t value = parameter.as_int();
+            updateConfigParam(node_parameter, key_name_list, value);
+            break;
+          }
         case rclcpp::ParameterType::PARAMETER_DOUBLE:
-        {
-          double value = parameter.as_double();
-          updateConfigParam(node_parameter, key_name_list, value);
-          break;
-        }
+          {
+            double value = parameter.as_double();
+            updateConfigParam(node_parameter, key_name_list, value);
+            break;
+          }
         case rclcpp::ParameterType::PARAMETER_STRING:
-        {
-          std::string value = parameter.as_string();
-          updateConfigParam(node_parameter, key_name_list, value);
-          break;
-        }
+          {
+            std::string value = parameter.as_string();
+            updateConfigParam(node_parameter, key_name_list, value);
+            break;
+          }
         case rclcpp::ParameterType::PARAMETER_BYTE_ARRAY:
-        {
-          auto byte_array = parameter.as_byte_array();
-          if (byte_array.size() == 0) {
-            RCLCPP_WARN(
-              this->get_logger(),
-              "parameter %s value is empty, it will not be stored", name.c_str());
+          {
+            auto byte_array = parameter.as_byte_array();
+            if (byte_array.size() == 0) {
+              RCLCPP_WARN(
+                this->get_logger(),
+                "parameter %s value is empty, it will not be stored", name.c_str());
+              break;
+            }
+            YAML::Node seq;
+            seq.SetStyle(YAML::EmitterStyle::Flow);
+            for (auto byte : byte_array) {
+              // TODO(fujitatomoya): rcl_yaml_param_parser does not support byte array,
+              // use int array temporarily
+              seq.push_back((int64_t)byte);
+            }
+            updateConfigParam(node_parameter, key_name_list, seq);
             break;
           }
-          YAML::Node seq;
-          seq.SetStyle(YAML::EmitterStyle::Flow);
-          for (auto byte : byte_array)
-          {
-            // TODO. rcl_yaml_param_parser not support byte array, use int array temporary
-            seq.push_back((int64_t)byte);
-          }
-          updateConfigParam(node_parameter, key_name_list, seq);
-          break;
-        }
         case rclcpp::ParameterType::PARAMETER_BOOL_ARRAY:
-        {
-          auto bool_array = parameter.as_bool_array();
-          if (bool_array.size() == 0) {
-            RCLCPP_WARN(
-              this->get_logger(),
-              "parameter %s value is empty, it will not be stored", name.c_str());
-            break;
-          }
-          YAML::Node seq;
-          seq.SetStyle(YAML::EmitterStyle::Flow);
-          for (bool b : bool_array) // Vector is specialized for bool
           {
-            seq.push_back(b);
-          }
+            auto bool_array = parameter.as_bool_array();
+            if (bool_array.size() == 0) {
+              RCLCPP_WARN(
+                this->get_logger(),
+                "parameter %s value is empty, it will not be stored", name.c_str());
+              break;
+            }
+            YAML::Node seq;
+            seq.SetStyle(YAML::EmitterStyle::Flow);
+            for (bool b : bool_array) {  // Vector is specialized for bool
+              seq.push_back(b);
+            }
 
-          updateConfigParam(node_parameter, key_name_list, seq);
-          break;
-        }
+            updateConfigParam(node_parameter, key_name_list, seq);
+            break;
+          }
         case rclcpp::ParameterType::PARAMETER_INTEGER_ARRAY:
-        {
-          auto array = parameter.as_integer_array();
-          if (array.size() == 0) {
-            RCLCPP_WARN(
-              this->get_logger(),
-              "parameter %s value is empty, it will not be stored", name.c_str());
+          {
+            auto array = parameter.as_integer_array();
+            if (array.size() == 0) {
+              RCLCPP_WARN(
+                this->get_logger(),
+                "parameter %s value is empty, it will not be stored", name.c_str());
+              break;
+            }
+            YAML::Node seq;
+            seq.SetStyle(YAML::EmitterStyle::Flow);
+            for (auto i : array) {
+              seq.push_back(i);
+            }
+            updateConfigParam(node_parameter, key_name_list, seq);
             break;
           }
-          YAML::Node seq;
-          seq.SetStyle(YAML::EmitterStyle::Flow);
-          for (auto i : array)
-          {
-            seq.push_back(i);
-          }
-          updateConfigParam(node_parameter, key_name_list, seq);
-          break;
-        }
         case rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY:
-        {
-          auto array = parameter.as_double_array();
-          if (array.size() == 0) {
-            RCLCPP_WARN(
-              this->get_logger(),
-              "parameter %s value is empty, it will not be stored", name.c_str());
+          {
+            auto array = parameter.as_double_array();
+            if (array.size() == 0) {
+              RCLCPP_WARN(
+                this->get_logger(),
+                "parameter %s value is empty, it will not be stored", name.c_str());
+              break;
+            }
+            YAML::Node seq;
+            seq.SetStyle(YAML::EmitterStyle::Flow);
+            for (auto d : array) {
+              seq.push_back(d);
+            }
+            updateConfigParam(node_parameter, key_name_list, seq);
             break;
           }
-          YAML::Node seq;
-          seq.SetStyle(YAML::EmitterStyle::Flow);
-          for (auto d : array)
-          {
-            seq.push_back(d);
-          }
-          updateConfigParam(node_parameter, key_name_list, seq);
-          break;
-        }
         case rclcpp::ParameterType::PARAMETER_STRING_ARRAY:
-        {
-          auto array = parameter.as_string_array();
-          if (array.size() == 0) {
-            RCLCPP_WARN(
-              this->get_logger(),
-              "parameter %s value is empty, it will not be stored", name.c_str());
+          {
+            auto array = parameter.as_string_array();
+            if (array.size() == 0) {
+              RCLCPP_WARN(
+                this->get_logger(),
+                "parameter %s value is empty, it will not be stored", name.c_str());
+              break;
+            }
+            YAML::Node seq;
+            seq.SetStyle(YAML::EmitterStyle::Flow);
+            for (auto & str : array) {
+              seq.push_back(str);
+            }
+            updateConfigParam(node_parameter, key_name_list, seq);
             break;
           }
-          YAML::Node seq;
-          seq.SetStyle(YAML::EmitterStyle::Flow);
-          for (auto& str : array)
-          {
-            seq.push_back(str);
-          }
-          updateConfigParam(node_parameter, key_name_list, seq);
-          break;
-        }
         default:
-        {
-          RCLCPP_WARN(
-            this->get_logger(),
-            "parameter %s unsupported type %d",
-            name.c_str(), parameter.get_type());
-          break;
-        }
+          {
+            RCLCPP_WARN(
+              this->get_logger(),
+              "parameter %s unsupported type %d",
+              name.c_str(), parameter.get_type());
+            break;
+          }
       }
     }
 
@@ -968,9 +945,28 @@ void ParameterServer::StoreYamlFile()
     // use emitter to traverse all sub nodes, if value of Node is string, add ' between value.
     YAML::Emitter out;
     SaveNode(out, parameter_config);
-    std::ofstream fout(persistent_yaml_file_);
-    fout << out.c_str();
-    fout.close();
+
+    // Write to a temporary file next to the persistent file and rename it into place,
+    // so that readers never observe a partially written file and a crash while writing
+    // does not corrupt the persistent parameters.
+    const std::string tmp_yaml_file = persistent_yaml_file_ + ".tmp";
+    {
+      std::ofstream fout(tmp_yaml_file, std::ios::trunc);
+      if (!fout) {
+        RCLCPP_ERROR(
+          this->get_logger(), "Failed to open %s for writing", tmp_yaml_file.c_str());
+        return;
+      }
+      fout << out.c_str();
+    }
+    boost::system::error_code ec;
+    boost::filesystem::rename(tmp_yaml_file, persistent_yaml_file_, ec);
+    if (ec) {
+      RCLCPP_ERROR(
+        this->get_logger(), "Failed to store %s: %s",
+        persistent_yaml_file_.c_str(), ec.message().c_str());
+      boost::filesystem::remove(tmp_yaml_file, ec);
+    }
   }
 }
 
@@ -979,7 +975,7 @@ bool ParameterServer::CheckPersistentParam(const std::vector<rclcpp::Parameter> 
   RCLCPP_DEBUG(this->get_logger(), "%s", PARAMETER_SERVER_FUNCTION);
   bool flag = false;
 
-  for (auto& parameter : parameters) {
+  for (auto & parameter : parameters) {
     std::string parameter_name = parameter.get_name();
     if (parameter_name.find(PERSISTENT_DOT_KEY) != 0) {
       continue;
