@@ -189,10 +189,10 @@ ParameterServer::ParameterServer(
 
 #if RCLCPP_VERSION_MAJOR < 17
       for (const rclcpp::Parameter & param : parameters) {
-        if(param.get_name() == MUST_SAVE_ON_UPDATE_PARAM) {
+        if (param.get_name() == MUST_SAVE_ON_UPDATE_PARAM) {
           RCLCPP_INFO(
-              this->get_logger(), "Save on update parameter value changed to %s",
-              param.as_bool() ? "true" : "false");
+            this->get_logger(), "Save on update parameter value changed to %s",
+            param.as_bool() ? "true" : "false");
           must_save_on_update_ = param.as_bool();
         }
       }
@@ -202,17 +202,6 @@ ParameterServer::ParameterServer(
         if (!param_update_) {
           param_update_ = true;
         }
-<<<<<<< HEAD
-=======
-
-#if RCLCPP_VERSION_MAJOR < 17
-        // For ROS Humble (rclcpp 16.x) compatibility, handle save-on-update in on-set callback
-        // Post-set callbacks were added in Iron (rclcpp 17.x) and later
-        if(must_save_on_update_) {
-          this->StoreYamlFile();
-        }
-#endif
->>>>>>> 1caf6b5 (Integrate unit and system tests via ament_add_gtest (#18) (#148))
       }
 
       return result;
@@ -228,20 +217,20 @@ ParameterServer::ParameterServer(
     {
       // Update behavior based on the updated parameter
       for (const rclcpp::Parameter & param : parameters) {
-        if(param.get_name() == MUST_SAVE_ON_UPDATE_PARAM) {
+        if (param.get_name() == MUST_SAVE_ON_UPDATE_PARAM) {
           RCLCPP_INFO(
             this->get_logger(), "Save on update parameter value changed to %s",
             param.as_bool() ? "true" : "false");
           must_save_on_update_ = param.as_bool();
-        } else if(param.get_name() == STORING_PERIOD_PARAM) {
+        } else if (param.get_name() == STORING_PERIOD_PARAM) {
           updateStoringTimer(param);
-        } else if(param.get_name() == ALLOW_DYNAMIC_TYPING_PARAM) {
+        } else if (param.get_name() == ALLOW_DYNAMIC_TYPING_PARAM) {
           updateDynamicTyping(param);
         }
       }
 
       if (CheckPersistentParam(parameters)) {
-        if(must_save_on_update_) {
+        if (must_save_on_update_) {
           this->StoreYamlFile();
         }
       }
@@ -249,39 +238,41 @@ ParameterServer::ParameterServer(
   post_set_callback_handler_ = this->add_post_set_parameters_callback(post_param_change_callback);
 #endif
 
-  save_trigger_ = this->create_service<std_srvs::srv::Trigger>("~/save_params",
-      [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr & req,
-      [[maybe_unused]] const std_srvs::srv::Trigger::Response::SharedPtr & res
-      ) {
-        RCLCPP_INFO(this->get_logger(), "Parameter save manually requested");
-        try {
-          this->StoreYamlFile();
-          res->success = true;
-          res->message = "Parameters saved successfully";
-        } catch(const std::exception & ex) {
-          std::ostringstream ss;
-          ss << "Parameters could not be saved. Error: " << ex.what();
-          res->success = false;
-          res->message = ss.str();
-        }
-  });
+  save_trigger_ = this->create_service<std_srvs::srv::Trigger>(
+    "~/save_params",
+    [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr & req,
+    [[maybe_unused]] const std_srvs::srv::Trigger::Response::SharedPtr & res
+    ) {
+      RCLCPP_INFO(this->get_logger(), "Parameter save manually requested");
+      try {
+        this->StoreYamlFile();
+        res->success = true;
+        res->message = "Parameters saved successfully";
+      } catch (const std::exception & ex) {
+        std::ostringstream ss;
+        ss << "Parameters could not be saved. Error: " << ex.what();
+        res->success = false;
+        res->message = ss.str();
+      }
+    });
 
-  reload_trigger_ = this->create_service<std_srvs::srv::Trigger>("~/reload_params",
-      [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr & req,
-      [[maybe_unused]] const std_srvs::srv::Trigger::Response::SharedPtr & res
-      ) {
-        RCLCPP_INFO(this->get_logger(), "Parameter reload manually requested");
-        try {
-          this->LoadYamlFile();
-          res->success = true;
-          res->message = "Parameters reloaded";
-        } catch(const std::exception & ex) {
-          std::ostringstream ss;
-          ss << "Parameters could not be reloaded. Error: " << ex.what();
-          res->success = false;
-          res->message = ss.str();
-        }
-  });
+  reload_trigger_ = this->create_service<std_srvs::srv::Trigger>(
+    "~/reload_params",
+    [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr & req,
+    [[maybe_unused]] const std_srvs::srv::Trigger::Response::SharedPtr & res
+    ) {
+      RCLCPP_INFO(this->get_logger(), "Parameter reload manually requested");
+      try {
+        this->LoadYamlFile();
+        res->success = true;
+        res->message = "Parameters reloaded";
+      } catch (const std::exception & ex) {
+        std::ostringstream ss;
+        ss << "Parameters could not be reloaded. Error: " << ex.what();
+        res->success = false;
+        res->message = ss.str();
+      }
+    });
 
   LoadYamlFile();
 }
@@ -577,12 +568,14 @@ void ParameterServer::LoadYamlFile()
         }
 
         if (has_parameter_flag || undeclare_exist_override) {
-          RCLCPP_DEBUG(this->get_logger(),
+          RCLCPP_DEBUG(
+            this->get_logger(),
             "set %s %s (has_parameter_flag:%d, undeclare_exist_override:%d",
             name.c_str(), to_string(value).c_str(),
             has_parameter_flag, undeclare_exist_override);
 
-          auto set_parameters_results = node_parameters->set_parameters({
+          auto set_parameters_results = node_parameters->set_parameters(
+          {
             rclcpp::Parameter(name, value)
           });
           for (auto & result : set_parameters_results) {
@@ -673,8 +666,9 @@ void ParameterServer::SaveNode(YAML::Emitter & out, YAML::Node node, const std::
         switch (parameter.get_type()) {
           case rclcpp::ParameterType::PARAMETER_NOT_SET:
             {
-              RCLCPP_INFO(this->get_logger(),
-              "parameter %s not set(or deleted), it will not be stored", name.c_str());
+              RCLCPP_INFO(
+                this->get_logger(),
+                "parameter %s not set(or deleted), it will not be stored", name.c_str());
               break;
             }
           case rclcpp::ParameterType::PARAMETER_BOOL:
@@ -743,9 +737,9 @@ void ParameterServer::SaveNode(YAML::Emitter & out, YAML::Node node, const std::
             }
           default: {
               RCLCPP_WARN(
-              this->get_logger(),
-              "parameter %s unsupported type %d",
-              name.c_str(), parameter.get_type());
+                this->get_logger(),
+                "parameter %s unsupported type %d",
+                name.c_str(), parameter.get_type());
               break;
             }
         }
@@ -799,8 +793,9 @@ void ParameterServer::StoreYamlFile()
       switch (parameter.get_type()) {
         case rclcpp::ParameterType::PARAMETER_NOT_SET:
           {
-            RCLCPP_INFO(this->get_logger(), "parameter %s is not set, it will not be stored",
-            name.c_str());
+            RCLCPP_INFO(
+              this->get_logger(), "parameter %s is not set, it will not be stored",
+              name.c_str());
             break;
           }
         case rclcpp::ParameterType::PARAMETER_BOOL:
@@ -832,8 +827,8 @@ void ParameterServer::StoreYamlFile()
             auto byte_array = parameter.as_byte_array();
             if (byte_array.size() == 0) {
               RCLCPP_WARN(
-              this->get_logger(),
-              "parameter %s value is empty, it will not be stored", name.c_str());
+                this->get_logger(),
+                "parameter %s value is empty, it will not be stored", name.c_str());
               break;
             }
             YAML::Node seq;
@@ -851,8 +846,8 @@ void ParameterServer::StoreYamlFile()
             auto bool_array = parameter.as_bool_array();
             if (bool_array.size() == 0) {
               RCLCPP_WARN(
-              this->get_logger(),
-              "parameter %s value is empty, it will not be stored", name.c_str());
+                this->get_logger(),
+                "parameter %s value is empty, it will not be stored", name.c_str());
               break;
             }
             YAML::Node seq;
@@ -869,8 +864,8 @@ void ParameterServer::StoreYamlFile()
             auto array = parameter.as_integer_array();
             if (array.size() == 0) {
               RCLCPP_WARN(
-              this->get_logger(),
-              "parameter %s value is empty, it will not be stored", name.c_str());
+                this->get_logger(),
+                "parameter %s value is empty, it will not be stored", name.c_str());
               break;
             }
             YAML::Node seq;
@@ -886,8 +881,8 @@ void ParameterServer::StoreYamlFile()
             auto array = parameter.as_double_array();
             if (array.size() == 0) {
               RCLCPP_WARN(
-              this->get_logger(),
-              "parameter %s value is empty, it will not be stored", name.c_str());
+                this->get_logger(),
+                "parameter %s value is empty, it will not be stored", name.c_str());
               break;
             }
             YAML::Node seq;
@@ -903,8 +898,8 @@ void ParameterServer::StoreYamlFile()
             auto array = parameter.as_string_array();
             if (array.size() == 0) {
               RCLCPP_WARN(
-              this->get_logger(),
-              "parameter %s value is empty, it will not be stored", name.c_str());
+                this->get_logger(),
+                "parameter %s value is empty, it will not be stored", name.c_str());
               break;
             }
             YAML::Node seq;
@@ -918,9 +913,9 @@ void ParameterServer::StoreYamlFile()
         default:
           {
             RCLCPP_WARN(
-            this->get_logger(),
-            "parameter %s unsupported type %d",
-            name.c_str(), parameter.get_type());
+              this->get_logger(),
+              "parameter %s unsupported type %d",
+              name.c_str(), parameter.get_type());
             break;
           }
       }

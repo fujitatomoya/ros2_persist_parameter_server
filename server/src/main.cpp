@@ -34,22 +34,30 @@ int main(int argc, char ** argv)
   auto nonros_args = rclcpp::init_and_remove_ros_arguments(argc, argv);
 
   po::options_description description("ROS2 parameter server command line interfaces");
-  description.add_options()
-  ("help,h", "help message to show interfaces")
-  ("file-path,f", po::value<std::string>()->default_value("/tmp/parameter_server.yaml"),
-    "volume path to load/store parameters in yaml format (default /tmp/parameter_server.yaml)")
-  ("allow-declare,d", po::value<bool>()->default_value(true),
-    "enable(true) / disable(false) allow_undeclared_parameters via node option (default true)")
-  ("allow-override,o", po::value<bool>()->default_value(true),
+  // One option per statement, so that the block is formatted the same way by every
+  // uncrustify version used across the supported ROS distributions.
+  auto add_option = description.add_options();
+  add_option("help,h", "help message to show interfaces");
+  add_option(
+    "file-path,f", po::value<std::string>()->default_value("/tmp/parameter_server.yaml"),
+    "volume path to load/store parameters in yaml format (default /tmp/parameter_server.yaml)");
+  add_option(
+    "allow-declare,d", po::value<bool>()->default_value(true),
+    "enable(true) / disable(false) allow_undeclared_parameters via node option (default true)");
+  add_option(
+    "allow-override,o", po::value<bool>()->default_value(true),
     "enable(true) / disable(false) automatically_declare_parameters_from_overrides "
-    "via node option (default true)")
-  ("storing-period,s", po::value<unsigned int>()->default_value(60),
+    "via node option (default true)");
+  add_option(
+    "storing-period,s", po::value<unsigned int>()->default_value(60),
     "period in seconds for periodic persistent parameter storing (default 60). "
-    "No periodic storing is performed if this parameter is set to 0")
-  ("allow-dynamic-typing,t", po::value<bool>()->default_value(false),
+    "No periodic storing is performed if this parameter is set to 0");
+  add_option(
+    "allow-dynamic-typing,t", po::value<bool>()->default_value(false),
     "When enabled (true), allows parameter type to change upon reading from persistence. "
-    "Disabled (false) by default")
-  ("save-on-update,u", po::value<bool>()->default_value(false),
+    "Disabled (false) by default");
+  add_option(
+    "save-on-update,u", po::value<bool>()->default_value(false),
     "enable(true) / disable(false) immediate saving to disk when a parameter changes "
     "(default false)");
 
