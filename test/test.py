@@ -34,6 +34,12 @@ launchServerCmdDynamicParamChange = [
 launchClientCmdDynamicParamChange = [
     'ros2', 'run', 'persist_parameter_server', 'client_dynamic_param_change']
 
+# server configuration parameters must be declared and reconfigurable
+# even if automatically_declare_parameters_from_overrides is disabled
+launchServerCmdDynamicParamChangeNoOverride = [
+    'ros2', 'launch', 'persist_parameter_server', 'test.launch.py',
+    'allow_override:=false', 'save_on_update:=false', 'storing_period:=0']
+
 if shutil.which('ros2') is None:
     print("source <colcon_ws>/install/setup.bash...then retry.")
     sys.exit(1)
@@ -120,15 +126,31 @@ print(f"Parameter Client Process started with PID: {client_process.pid}")
 return_code4 = client_process.wait()
 os.killpg(os.getpgid(server_process.pid), signal.SIGTERM)
 
+print("\nTest dynamic param change finished. Proceeding to testing dynamic param change without allow-override")
+
+# Start the server with automatically_declare_parameters_from_overrides disabled
+server_process = subprocess.Popen(
+    launchServerCmdDynamicParamChangeNoOverride, preexec_fn=os.setsid)
+print(f"Parameter Server Process started with PID: {server_process.pid}")
+
+# Start test client process
+client_process = subprocess.Popen(launchClientCmdDynamicParamChange)
+print(f"Parameter Client Process started with PID: {client_process.pid}")
+
+# Wait until the client process finishes and then kill the server
+return_code5 = client_process.wait()
+os.killpg(os.getpgid(server_process.pid), signal.SIGTERM)
+
 print("\nTest process finished.")
 print("Return code summary:")
 print(f"  default options: {return_code}")
 print(f"  node options: {return_code2}")
 print(f"  save-on-update: {return_code3}")
 print(f"  dynamic param change: {return_code4}")
+print(f"  dynamic param change without allow-override: {return_code5}")
 
 # Check if the client process completed successfully
-if return_code == return_code2 == return_code3 == return_code4 == 0:
+if return_code == return_code2 == return_code3 == return_code4 == return_code5 == 0:
     print("The process completed successfully.")
     sys.exit(0)
 else:
