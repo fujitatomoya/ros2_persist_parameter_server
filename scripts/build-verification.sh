@@ -49,7 +49,7 @@ function build_parameter_server () {
     echo "[${FUNCNAME[0]}]: build ROS 2 parameter server."
     source /opt/ros/${ROS_DISTRO}/setup.bash
     cd ${COLCON_WORKSPACE}
-    colcon build --symlink-install --packages-select persist_parameter_server --cmake-args -D CLIENT_TEST_DEMO=ON
+    colcon build --symlink-install --packages-select persist_parameter_server
 }
 
 function test_parameter_server () {
@@ -58,14 +58,10 @@ function test_parameter_server () {
     source /opt/ros/${ROS_DISTRO}/setup.bash
     cd ${COLCON_WORKSPACE}
 
-    # TODO(@fujitatomoya): currently unit tests are missing for parameter server with `colcon test`.
-
-    # source the parameter server local packages
-    source ./install/local_setup.bash
-    # setup and execute the system test
-    mkdir /tmp/test
-    cp ./src/ros2_persist_parameter_server/server/param/parameter_server.yaml /tmp/test
-    ./src/ros2_persist_parameter_server/test/test.py
+    # unit and system tests are integrated via ament_add_gtest and linters via ament_lint_auto,
+    # so that everything runs with `colcon test` as the other ROS 2 packages.
+    colcon test --packages-select persist_parameter_server --event-handlers console_direct+ --return-code-on-test-failure
+    colcon test-result --all --verbose
 }
 
 ########
