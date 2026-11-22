@@ -14,31 +14,34 @@
 
 """Launch a server."""
 
-from launch import LaunchDescription
-from launch.substitutions import EnvironmentVariable
-import launch_ros.actions
-import os
 import pathlib
+
+from launch import LaunchDescription
+import launch_ros.actions
 
 parameters_file_name = 'parameters_via_launch.yaml'
 
+
 def generate_launch_description():
-    parameters_file_path = str(pathlib.Path(__file__).parents[1]) # get current path and go one level up
+    # get current path and go one level up
+    parameters_file_path = str(pathlib.Path(__file__).parents[1])
     parameters_file_path += '/param/' + parameters_file_name
     return LaunchDescription(
         [
             launch_ros.actions.Node(
-                package="persist_parameter_server",
-                executable="server",
-                output="screen",
+                package='persist_parameter_server',
+                executable='server',
+                output='screen',
                 # respawn in 5.0 seconds
                 respawn=True,
                 respawn_delay=5.0,
-                # these parameters in parameters_file_path cannot be registered as persistent parameters,
-                # these will be loaded as normal parameter without event on /parameter_events topic.
+                # these parameters in parameters_file_path cannot be registered as
+                # persistent parameters, these will be loaded as normal parameter
+                # without event on /parameter_events topic.
                 parameters=[parameters_file_path],
                 # this is an example to load persistent parameter files into parameter server,
-                # these parameters described in parameter_server.yaml with prefix "persistent" will be registered as persistent parameter.
+                # these parameters described in parameter_server.yaml with prefix "persistent"
+                # will be registered as persistent parameter.
                 # arguments=[
                 #     "--file-path",
                 #     "/tmp/parameter_server.yaml",
