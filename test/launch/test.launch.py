@@ -30,11 +30,15 @@ def generate_launch_description():
     storing_period_arg = DeclareLaunchArgument(
         'storing_period', default_value='60', description='Period in seconds for periodic persistent parameter storing'
     )
+    allow_override_arg = DeclareLaunchArgument(
+        'allow_override', default_value='true', description='Automatically declare parameters from overrides'
+    )
 
     return LaunchDescription([
         allow_dynamic_typing_arg,
         save_on_update_arg,
         storing_period_arg,
+        allow_override_arg,
         ExecuteProcess(
             cmd=[
                 'ros2', 'run', 'persist_parameter_server', 'server',
@@ -45,6 +49,8 @@ def generate_launch_description():
                     'save_on_update'),
                 '--storing-period', LaunchConfiguration(
                     'storing_period'),
+                '--allow-override', LaunchConfiguration(
+                    'allow_override'),
             ],
             respawn=True
         )

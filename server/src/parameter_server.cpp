@@ -31,6 +31,16 @@
 #define PERSISTENT_KEY        "persistent"
 #define PERSISTENT_DOT_KEY    "persistent."
 
+// Server configuration parameter names
+#define STORING_PERIOD_PARAM        "storing_period"
+#define ALLOW_DYNAMIC_TYPING_PARAM  "allow_dynamic_typing"
+#define MUST_SAVE_ON_UPDATE_PARAM   "must_save_on_update"
+
+// Upper bound of storing_period in seconds, so that the wall timer period
+// (converted to nanoseconds) can never overflow.
+static constexpr int64_t MAX_STORING_PERIOD_SEC =
+  std::numeric_limits<int64_t>::max() / 1000000000LL;
+
 #if defined(_MSC_VER)
 #define PARAMETER_SERVER_FUNCTION __FUNCSIG__
 #else
@@ -79,20 +89,10 @@ ParameterServer::ParameterServer(
   server_param_subscriber_ = std::make_shared<rclcpp::ParameterEventHandler>(this);
 #endif
 
-  // if automatically_declare_parameters_from_overrides is false, then the parameter_overrides will not be declared.
-  // So it is safer to fetch the passed parameters directly from options.parameter_overrides()
-  const std::vector<rclcpp::Parameter> & parameter_overrides = options.parameter_overrides();
-  for (const rclcpp::Parameter & param : parameter_overrides) {
-    if (param.get_name() == "allow_dynamic_typing") {
-      allow_dynamic_typing_ = param.as_bool();
-    }
-    if (param.get_name() == "storing_period") {
-      storing_period_ = param.as_int();
-    }
-    if (param.get_name() == "must_save_on_update") {
-      this->must_save_on_update_ = param.as_bool();
-    }
-  }
+  // Declare the server configuration parameters as node parameters.
+  // The values passed via command line are applied as parameter overrides,
+  // so they are picked up here regardless of automatically_declare_parameters_from_overrides.
+  DeclareServerParameters();
 
   if (allow_dynamic_typing_) {
     RCLCPP_INFO(
@@ -106,11 +106,14 @@ ParameterServer::ParameterServer(
       "Save on update enabled. Parameters will be saved when set.");
   }
 
-  if (storing_period_ < 0) {
+  if (storing_period_ < 0 || storing_period_ > MAX_STORING_PERIOD_SEC) {
     RCLCPP_WARN(
       this->get_logger(),
-      "storing_period parameter value (%ld) is not valid, treating as 0", storing_period_);
+      "storing_period parameter value (%lld) is not valid, treating as 0",
+      static_cast<long long>(storing_period_));
     storing_period_ = 0;
+    // keep the declared parameter value consistent with the actual behavior
+    this->set_parameter(rclcpp::Parameter(STORING_PERIOD_PARAM, storing_period_));
   }
 
   if (!storing_period_) {
@@ -123,8 +126,8 @@ ParameterServer::ParameterServer(
     );
 
     RCLCPP_INFO(
-      this->get_logger(), "Will perform periodic persistent parameter storing every %lds",
-      storing_period_);
+      this->get_logger(), "Will perform periodic persistent parameter storing every %llds",
+      static_cast<long long>(storing_period_));
   }
 
 #if RCLCPP_VERSION_MAJOR < 17
@@ -133,7 +136,7 @@ ParameterServer::ParameterServer(
       updateDynamicTyping(p);
     };
   dynamic_typing_callback_handle_ = server_param_subscriber_->add_parameter_callback(
-    "allow_dynamic_typing",
+    ALLOW_DYNAMIC_TYPING_PARAM,
     allow_dynamic_typing_param_change_callback
   );
 
@@ -143,7 +146,7 @@ ParameterServer::ParameterServer(
     };
 
   storing_period_callback_handle_ = server_param_subscriber_->add_parameter_callback(
-    "storing_period",
+    STORING_PERIOD_PARAM,
     storing_period_param_change_callback
   );
 #endif
@@ -160,7 +163,7 @@ ParameterServer::ParameterServer(
 
 #if RCLCPP_VERSION_MAJOR < 17
       for (const rclcpp::Parameter & param : parameters) {
-          if(param.get_name() == "must_save_on_update") {
+          if(param.get_name() == MUST_SAVE_ON_UPDATE_PARAM) {
             RCLCPP_INFO(
               this->get_logger(), "Save on update parameter value changed to %s",
               param.as_bool() ? "true" : "false");
@@ -199,14 +202,14 @@ ParameterServer::ParameterServer(
     {
       // Update behavior based on the updated parameter
       for (const rclcpp::Parameter & param : parameters) {
-        if(param.get_name() == "must_save_on_update") {
+        if(param.get_name() == MUST_SAVE_ON_UPDATE_PARAM) {
           RCLCPP_INFO(
             this->get_logger(), "Save on update parameter value changed to %s",
             param.as_bool() ? "true" : "false");
           must_save_on_update_ = param.as_bool();
-        } else if(param.get_name() == "storing_period") {
+        } else if(param.get_name() == STORING_PERIOD_PARAM) {
           updateStoringTimer(param);
-        } else if(param.get_name() == "allow_dynamic_typing") {
+        } else if(param.get_name() == ALLOW_DYNAMIC_TYPING_PARAM) {
           updateDynamicTyping(param);
         }
       }
@@ -275,19 +278,89 @@ void ParameterServer::TimerCallback() {
   StoreYamlFile();
 }
 
+void ParameterServer::DeclareServerParameters()
+{
+  RCLCPP_DEBUG(this->get_logger(), "%s", PARAMETER_SERVER_FUNCTION);
+
+  {
+    rcl_interfaces::msg::ParameterDescriptor descriptor;
+    descriptor.name = STORING_PERIOD_PARAM;
+    descriptor.description =
+      "Period in seconds for periodic persistent parameter storing. "
+      "0 disables the periodic storing. Can be changed at runtime.";
+    storing_period_ = DeclareOrGetServerParameter<int64_t>(
+      STORING_PERIOD_PARAM, storing_period_, descriptor);
+  }
+
+  {
+    rcl_interfaces::msg::ParameterDescriptor descriptor;
+    descriptor.name = ALLOW_DYNAMIC_TYPING_PARAM;
+    descriptor.description =
+      "Allow the type of the parameters served by the parameter server to be changed "
+      "after declaration. Can be changed at runtime.";
+    allow_dynamic_typing_ = DeclareOrGetServerParameter<bool>(
+      ALLOW_DYNAMIC_TYPING_PARAM, allow_dynamic_typing_, descriptor);
+  }
+
+  {
+    rcl_interfaces::msg::ParameterDescriptor descriptor;
+    descriptor.name = MUST_SAVE_ON_UPDATE_PARAM;
+    descriptor.description =
+      "Store the persistent parameters to the file system each time one of them is changed. "
+      "Can be changed at runtime.";
+    must_save_on_update_ = DeclareOrGetServerParameter<bool>(
+      MUST_SAVE_ON_UPDATE_PARAM, must_save_on_update_, descriptor);
+  }
+}
+
 rcl_interfaces::msg::SetParametersResult ParameterServer::checkValidParams(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   auto result = rcl_interfaces::msg::SetParametersResult();
+  result.successful = true;
 
   for (const rclcpp::Parameter & param : parameters) {
-    if(param.get_name() == "storing_period" && param.as_int() < 0) {
-      result.successful = false;
-      result.reason = "Storing period cannot be a negative value.";
-      return result;
+    const std::string & name = param.get_name();
+    const rclcpp::ParameterType type = param.get_type();
+
+    if (name == STORING_PERIOD_PARAM) {
+      if (type != rclcpp::ParameterType::PARAMETER_INTEGER) {
+        result.successful = false;
+        result.reason = std::string(STORING_PERIOD_PARAM) +
+          " must be an integer value in seconds, and cannot be deleted.";
+        return result;
+      }
+      if (param.as_int() < 0) {
+        result.successful = false;
+        result.reason = "Storing period cannot be a negative value.";
+        return result;
+      }
+      if (param.as_int() > MAX_STORING_PERIOD_SEC) {
+        result.successful = false;
+        result.reason = "Storing period cannot be greater than " +
+          std::to_string(MAX_STORING_PERIOD_SEC) + " seconds.";
+        return result;
+      }
+    } else if (name == ALLOW_DYNAMIC_TYPING_PARAM || name == MUST_SAVE_ON_UPDATE_PARAM) {
+      if (type != rclcpp::ParameterType::PARAMETER_BOOL) {
+        result.successful = false;
+        result.reason = name + " must be a boolean value, and cannot be deleted.";
+        return result;
+      }
+    } else if (!allow_dynamic_typing_ && this->has_parameter(name)) {
+      // Enforce the typing policy here instead of relying on the rclcpp descriptor,
+      // so that allow_dynamic_typing can be reconfigured at runtime for the
+      // parameters that are already declared.
+      const rclcpp::ParameterType current_type = this->get_parameter(name).get_type();
+      if (current_type != rclcpp::ParameterType::PARAMETER_NOT_SET && current_type != type) {
+        result.successful = false;
+        result.reason = "Wrong parameter type, parameter {" + name + "} is of type {" +
+          rclcpp::to_string(current_type) + "}, setting it to {" + rclcpp::to_string(type) +
+          "} is not allowed since " + ALLOW_DYNAMIC_TYPING_PARAM + " is false.";
+        return result;
+      }
     }
   }
-  result.successful = true;
 
   return result;
 }
@@ -320,10 +393,6 @@ void ParameterServer::updateDynamicTyping(const rclcpp::Parameter & param)
     this->get_logger(), "Allow dynamic typing param value changed to %s",
     param.as_bool() ? "true" : "false");
   allow_dynamic_typing_ = param.as_bool();
-  RCLCPP_WARN(
-    this->get_logger(),
-    "Changing allow_dynamic_typing at runtime only affects parameters declared after "
-    "this change; already-declared parameter descriptors are not updated automatically.");
 }
 
 // Add a limitation that A node that is a map in custom YAML file can't contain '.' in the key name
@@ -462,8 +531,11 @@ void ParameterServer::LoadYamlFile()
         {
           // declare parameter
           RCLCPP_DEBUG(this->get_logger(), "declare %s %s", name.c_str(), to_string(value).c_str());
+          // Always declare as dynamically typed in rclcpp. The typing policy is enforced
+          // by the server itself (see checkValidParams) based on allow_dynamic_typing,
+          // so that it can be reconfigured at runtime for already declared parameters.
           rcl_interfaces::msg::ParameterDescriptor descriptor;
-          descriptor.dynamic_typing = allow_dynamic_typing_;
+          descriptor.dynamic_typing = true;
           node_parameters->declare_parameter(name, value, descriptor);
 
           // 1. if automatically_declare_parameters_from_overrides is false,
