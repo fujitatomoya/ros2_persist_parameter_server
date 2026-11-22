@@ -149,6 +149,49 @@ int main(int argc, char ** argv)
       // Dynamically enable allow_dynamic_typing
       test_client->do_server_param_change_and_check<bool>("allow_dynamic_typing",
         true, true, "v. Dynamically enable allow_dynamic_typing");
+      // Verify the same type change now succeeds, even though the parameter
+      // was declared before allow_dynamic_typing was enabled
+      test_client->do_change_and_check<std::string>(
+        "persistent.some_int", std::string{"mutated"},
+        "w. Type change succeeds with dynamic typing on");
+      // Revert the parameter type to int, so that the stored file keeps the original type
+      test_client->do_change_and_check<int>(
+        "persistent.some_int", 1, "x. Revert the parameter type to int");
+    }
+
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Test allow_dynamic_typing param dynamic turn off");
+      // Dynamically disable allow_dynamic_typing
+      test_client->do_server_param_change_and_check<bool>("allow_dynamic_typing",
+        false, false, "y. Dynamically disable allow_dynamic_typing");
+      // Verify type change is rejected again, including for the parameters
+      // that were declared while dynamic typing was enabled
+      test_client->do_fail_to_change<std::string>(
+        "persistent.some_int", std::string{"mutated"},
+        "z. Type change fails again with dynamic typing off");
+    }
+
+    {
+      RCLCPP_INFO(test_client->get_logger(), "Test invalid server parameter values are rejected");
+      test_client->do_fail_to_change<int>(
+        "storing_period", -1, "z1. Negative storing_period is rejected");
+      test_client->do_fail_to_change<std::string>(
+        "storing_period", std::string{"invalid"},
+        "z2. Non-integer storing_period is rejected");
+      test_client->do_fail_to_change<int>(
+        "must_save_on_update", 1, "z3. Non-boolean must_save_on_update is rejected");
+      test_client->do_fail_to_change<int>(
+        "allow_dynamic_typing", 1, "z4. Non-boolean allow_dynamic_typing is rejected");
+      test_client->do_fail_to_change<rclcpp::ParameterValue>(
+        "storing_period", rclcpp::ParameterValue(),
+        "z5. storing_period cannot be deleted");
+      // Rejected requests must not change the server configuration
+      test_client->do_read_server_param_and_check<int64_t>("storing_period",
+        0, "z6. storing_period is unchanged after rejected requests");
+      test_client->do_read_server_param_and_check<bool>("must_save_on_update",
+        false, "z7. must_save_on_update is unchanged after rejected requests");
+      test_client->do_read_server_param_and_check<bool>("allow_dynamic_typing",
+        false, "z8. allow_dynamic_typing is unchanged after rejected requests");
     }
 
     ret_code = test_client->print_result();
