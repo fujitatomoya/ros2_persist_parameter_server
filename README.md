@@ -16,6 +16,7 @@ See [overview slide deck](https://raw.githack.com/fujitatomoya/ros2_persist_para
       - [Persistent Prefix](#persistent-prefix)
       - [Scope Overview](#scope-overview)
     - [Configurable Options](#configurable-options)
+    - [Runtime Reconfiguration](#runtime-reconfiguration)
     - [Services](#services)
   - [Sequence](#sequence)
   - [Getting Started](#getting-started)
@@ -145,6 +146,29 @@ all of the configuration options will be passed via arguments as following.
     </tbody>
 </table>
 
+### Runtime Reconfiguration
+
+The following configuration options are declared as parameters of the parameter server node, so that they can be inspected and changed at runtime via the ROS 2 parameter API (e.g. `ros2 param get/set`) without restarting the parameter server.
+These parameters are always declared with the initial values given by the command line arguments, regardless of `--allow-override`.
+
+|  Parameter  |  Type  |  CLI  |  Description  |
+| ---- | ---- | ---- | ---- |
+|  `storing_period`  |  integer  |  `--storing-period`  |  Interval in seconds for periodically storing the persistent parameters. Setting it to 0 stops the periodic storing, and setting a positive value (re)starts the timer with the new period. Negative values and non-integer values are rejected.  |
+|  `allow_dynamic_typing`  |  bool  |  `--allow-dynamic-typing`  |  Allows the type of the parameters served by the parameter server to be changed after declaration. The typing policy is enforced by the parameter server itself, so that the change applies to all parameters including the ones that are already declared.  |
+|  `must_save_on_update`  |  bool  |  `--save-on-update`  |  Stores the persistent parameters to the file system each time one of them is changed.  |
+
+```console
+$ ros2 param set /parameter_server storing_period 10
+Set parameter successful
+$ ros2 param set /parameter_server storing_period -1
+Setting parameter failed: Storing period cannot be a negative value.
+$ ros2 param set /parameter_server allow_dynamic_typing true
+Set parameter successful
+```
+
+> [!NOTE]
+> These configuration parameters are not persistent parameters, so the values changed at runtime are not stored in the file system. Use the command line arguments to change the initial values.
+
 ### Services
 
 - `~/reload_params`: Reloads the parameters from the configuration file. This service allows dynamic reconfiguration of the node without requiring a restart. When called, the parameter server will reload the parameter values and apply them to the current operation.
@@ -265,6 +289,7 @@ These samples verify the following functions.
 - non-persistent parameter cannot be read/stored to/from the file system.
 - non-persistent parameter can be read/modified from parameter client
 - parameter type can be changed dynamically only when allow-dynamic-typing is set
+- server configuration parameters (`storing_period`, `allow_dynamic_typing` and `must_save_on_update`) can be reconfigured at runtime via the parameter API, and invalid values are rejected
 
 make sure to add the path of `launch` package to the PATH environment.
 
