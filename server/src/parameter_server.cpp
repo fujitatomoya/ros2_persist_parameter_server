@@ -922,9 +922,28 @@ void ParameterServer::StoreYamlFile()
     // use emitter to traverse all sub nodes, if value of Node is string, add ' between value.
     YAML::Emitter out;
     SaveNode(out, parameter_config);
-    std::ofstream fout(persistent_yaml_file_);
-    fout << out.c_str();
-    fout.close();
+
+    // Write to a temporary file next to the persistent file and rename it into place,
+    // so that readers never observe a partially written file and a crash while writing
+    // does not corrupt the persistent parameters.
+    const std::string tmp_yaml_file = persistent_yaml_file_ + ".tmp";
+    {
+      std::ofstream fout(tmp_yaml_file, std::ios::trunc);
+      if (!fout) {
+        RCLCPP_ERROR(
+          this->get_logger(), "Failed to open %s for writing", tmp_yaml_file.c_str());
+        return;
+      }
+      fout << out.c_str();
+    }
+    boost::system::error_code ec;
+    boost::filesystem::rename(tmp_yaml_file, persistent_yaml_file_, ec);
+    if (ec) {
+      RCLCPP_ERROR(
+        this->get_logger(), "Failed to store %s: %s",
+        persistent_yaml_file_.c_str(), ec.message().c_str());
+      boost::filesystem::remove(tmp_yaml_file, ec);
+    }
   }
 }
 
