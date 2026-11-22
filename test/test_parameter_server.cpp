@@ -221,6 +221,30 @@ protected:
     return config[node_key]["ros__parameters"]["persistent"];
   }
 
+  /// Wait until the persistent parameter `key` holds `expected` in the yaml file.
+  /**
+   * With save-on-update enabled, the server stores the file asynchronously from the
+   * parameter event callback on ROS 2 Humble (post-set parameter callbacks are only
+   * available since Iron), so the file must be awaited before reloading or inspecting it.
+   */
+  template<typename ValueType>
+  void wait_for_stored_value(const std::string & key, const ValueType & expected)
+  {
+    const auto deadline = std::chrono::steady_clock::now() + 5s;
+    while (std::chrono::steady_clock::now() < deadline) {
+      try {
+        YAML::Node node = persistent_node_in_file()[key];
+        if (node && node.as<ValueType>() == expected) {
+          return;
+        }
+      } catch (const YAML::Exception &) {
+        // the file does not hold the value yet
+      }
+      std::this_thread::sleep_for(20ms);
+    }
+    FAIL() << "persistent parameter " << key << " was not stored in " << yaml_file_;
+  }
+
   std::string test_dir_;
   std::string yaml_file_;
   std::string server_namespace_;
@@ -356,6 +380,7 @@ TEST_F(ParameterServerTest, save_on_update_stores_immediately)
   change_and_check<int64_t>("persistent.auto_saved_int", 42);
   change_and_check<double>("persistent.auto_saved_double", 3.14159);
   change_and_check<bool>("persistent.auto_saved_bool", true);
+  ASSERT_NO_FATAL_FAILURE(wait_for_stored_value<bool>("auto_saved_bool", true));
 
   // reload from the file without saving: all values must have been auto-saved.
   ASSERT_TRUE(client_->reload_params());
@@ -365,7 +390,14 @@ TEST_F(ParameterServerTest, save_on_update_stores_immediately)
   expect_value<bool>("persistent.auto_saved_bool", true);
 
   // updating an auto-saved parameter overwrites the previous value in the file.
-  reload_and_check<std::string>("persistent.auto_saved_string", "UpdatedValue", "UpdatedValue");
+  ASSERT_TRUE(
+    client_->modify_parameter<std::string>(
+      "persistent.auto_saved_string",
+      "UpdatedValue"));
+  ASSERT_NO_FATAL_FAILURE(
+    wait_for_stored_value<std::string>("auto_saved_string", "UpdatedValue"));
+  ASSERT_TRUE(client_->reload_params());
+  expect_value<std::string>("persistent.auto_saved_string", "UpdatedValue");
 
   // manual save service keeps working alongside save-on-update.
   save_and_check<std::string>("persistent.manually_saved", "ManualValue");
@@ -385,7 +417,10 @@ TEST_F(ParameterServerTest, save_on_update_can_be_changed_dynamically)
   // dynamically turn save-on-update on.
   expect_value<bool>("must_save_on_update", false);
   change_and_check<bool>("must_save_on_update", true);
-  reload_and_check<std::string>("persistent.a_string", "Hi", "Hi");
+  ASSERT_TRUE(client_->modify_parameter<std::string>("persistent.a_string", "Hi"));
+  ASSERT_NO_FATAL_FAILURE(wait_for_stored_value<std::string>("a_string", "Hi"));
+  ASSERT_TRUE(client_->reload_params());
+  expect_value<std::string>("persistent.a_string", "Hi");
 
   // dynamically turn save-on-update off.
   change_and_check<bool>("must_save_on_update", false);
