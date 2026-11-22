@@ -227,7 +227,7 @@ Install local colcon workspace,
 # cd <colcon_workspace>/src
 # git clone -b <ROS_DISTRO> https://github.com/fujitatomoya/ros2_persist_parameter_server
 # cd <colcon_workspace>
-# colcon build --symlink-install --packages-select persist_parameter_server --cmake-args -D CLIENT_TEST_DEMO=ON
+# colcon build --symlink-install --packages-select persist_parameter_server
 # source install/local_setup.bash
 ```
 
@@ -283,69 +283,102 @@ Please see [How to deploy the parameter server with Kubernetes](./k8s/k8s_tutori
 
 ## Test
 
-These samples verify the following functions.
+Unit and system tests are integrated into the package with `ament_add_gtest` (`test/test_parameter_server.cpp`), so that they run with `colcon test` aligned with the other ROS 2 packages.
+Each test runs the parameter server node in-process and drives it with a parameter client node, exactly as an external node would do.
+Restarting the server node in the test flushes the persistent parameters into the file and loads them back, which is equivalent to restarting the server process.
+
+These tests verify the following functions.
 
 - persistent parameter can be read/stored to/from the file system.
 - persistent parameter can be read/modified from parameter client.
 - non-persistent parameter cannot be read/stored to/from the file system.
-- non-persistent parameter can be read/modified from parameter client
-- parameter type can be changed dynamically only when allow-dynamic-typing is set
-- server configuration parameters (`storing_period`, `allow_dynamic_typing` and `must_save_on_update`) can be reconfigured at runtime via the parameter API, and invalid values are rejected
+- non-persistent parameter can be read/modified from parameter client.
+- parameter type can be changed dynamically only when allow-dynamic-typing is set.
+- `~/save_params` and `~/reload_params` services store and reload the persistent parameters.
+- save-on-update stores the persistent parameters immediately when they are changed.
+- server configuration parameters (`storing_period`, `allow_dynamic_typing` and `must_save_on_update`) can be reconfigured at runtime via the parameter API, and invalid values are rejected.
+- double and double array parameters keep their precision in the file system.
+- invalid persistent parameter file is rejected at startup.
+- all parameter types (including arrays) are stored to and loaded from the file system, empty arrays and deleted parameters are not stored.
+- only parameters with the `persistent.` prefix are stored, including nested ones.
+- persistent parameter file takes precedence over the parameter overrides, and the namespace / node name keyed file formats are supported.
+- `~/save_params` and `~/reload_params` services handle missing and invalid files.
 
-make sure to add the path of `launch` package to the PATH environment.
-
-```bash
-source <launch_workspace>/install/setup.bash
-```
+The linters from [ament_lint_common](https://github.com/ament/ament_lint) (uncrustify, cpplint, cppcheck, copyright, flake8, pep257, lint_cmake and xmllint) are also executed via `colcon test`.
 
 ### Run
 
-[test.py](./test/test.py) is the entry for test.
-
-[test.py](./test/test.py) will call [test.launch.py](./test/launch/test.launch.py) file to start persistent parameter server and the test client, it also creates a thread to kill parameter server after specified time. All function tests are finished in client.
-
-> [!NOTE]
-> The test script will load the yaml file that should existed in `/tmp/test`, therefore, before executing test demo, you need to copy the yaml file existing in `server` directory to `/tmp/test`.
-
 ```bash
-mkdir -p /tmp/test
-cp <colcon_workspace>/src/ros2_persist_parameter/server/param/parameter_server.yaml /tmp/test
-./<colcon_workspace>/src/ros2_persist_parameter/test/test.py
+# cd <colcon_workspace>
+# colcon build --symlink-install --packages-select persist_parameter_server
+# colcon test --packages-select persist_parameter_server --event-handlers console_direct+
+# colcon test-result --all --verbose
 ```
 
-All of the test is listed with result as following
-
-> [!NOTE]
-> Client has a 5-seconds sleep during server restarts.
+All of the tests are listed with result as following.
 
 ```console
-......   // omit some output logs
+...<snip>
+[----------] 26 tests from ParameterServerTest
+[ RUN      ] ParameterServerTest.load_parameters_from_yaml_file
+[       OK ] ParameterServerTest.load_parameters_from_yaml_file (xx ms)
+[ RUN      ] ParameterServerTest.persistent_parameters_survive_restart
+[       OK ] ParameterServerTest.persistent_parameters_survive_restart (xx ms)
+[ RUN      ] ParameterServerTest.parameter_type_change_is_rejected_by_default
+[       OK ] ParameterServerTest.parameter_type_change_is_rejected_by_default (xx ms)
+[ RUN      ] ParameterServerTest.save_and_reload_services
+[       OK ] ParameterServerTest.save_and_reload_services (xx ms)
+[ RUN      ] ParameterServerTest.double_precision_is_preserved
+[       OK ] ParameterServerTest.double_precision_is_preserved (xx ms)
+[ RUN      ] ParameterServerTest.dynamic_typing_allows_type_change
+[       OK ] ParameterServerTest.dynamic_typing_allows_type_change (xx ms)
+[ RUN      ] ParameterServerTest.save_on_update_stores_immediately
+[       OK ] ParameterServerTest.save_on_update_stores_immediately (xx ms)
+[ RUN      ] ParameterServerTest.save_on_update_can_be_changed_dynamically
+[       OK ] ParameterServerTest.save_on_update_can_be_changed_dynamically (xx ms)
+[ RUN      ] ParameterServerTest.storing_period_can_be_changed_dynamically
+[       OK ] ParameterServerTest.storing_period_can_be_changed_dynamically (xx ms)
+[ RUN      ] ParameterServerTest.allow_dynamic_typing_can_be_changed_dynamically
+[       OK ] ParameterServerTest.allow_dynamic_typing_can_be_changed_dynamically (xx ms)
+[ RUN      ] ParameterServerTest.invalid_server_parameter_values_are_rejected
+[       OK ] ParameterServerTest.invalid_server_parameter_values_are_rejected (xx ms)
+[ RUN      ] ParameterServerTest.server_parameters_are_declared_without_allow_override
+[       OK ] ParameterServerTest.server_parameters_are_declared_without_allow_override (xx ms)
+[ RUN      ] ParameterServerTest.missing_yaml_file_is_tolerated
+[       OK ] ParameterServerTest.missing_yaml_file_is_tolerated (xx ms)
+[ RUN      ] ParameterServerTest.yaml_file_keyed_by_node_name
+[       OK ] ParameterServerTest.yaml_file_keyed_by_node_name (xx ms)
+[ RUN      ] ParameterServerTest.all_parameter_types_survive_restart
+[       OK ] ParameterServerTest.all_parameter_types_survive_restart (xx ms)
+[ RUN      ] ParameterServerTest.empty_arrays_are_not_stored
+[       OK ] ParameterServerTest.empty_arrays_are_not_stored (xx ms)
+[ RUN      ] ParameterServerTest.only_persistent_prefixed_parameters_are_stored
+[       OK ] ParameterServerTest.only_persistent_prefixed_parameters_are_stored (xx ms)
+[ RUN      ] ParameterServerTest.persistent_parameter_can_be_deleted
+[       OK ] ParameterServerTest.persistent_parameter_can_be_deleted (xx ms)
+[ RUN      ] ParameterServerTest.special_characters_in_strings_survive_restart
+[       OK ] ParameterServerTest.special_characters_in_strings_survive_restart (xx ms)
+[ RUN      ] ParameterServerTest.yaml_file_overrides_parameter_overrides
+[       OK ] ParameterServerTest.yaml_file_overrides_parameter_overrides (xx ms)
+[ RUN      ] ParameterServerTest.namespaced_server_uses_namespaced_yaml_section
+[       OK ] ParameterServerTest.namespaced_server_uses_namespaced_yaml_section (xx ms)
+[ RUN      ] ParameterServerTest.yaml_file_keyed_by_absolute_node_name
+[       OK ] ParameterServerTest.yaml_file_keyed_by_absolute_node_name (xx ms)
+[ RUN      ] ParameterServerTest.save_and_reload_service_error_handling
+[       OK ] ParameterServerTest.save_and_reload_service_error_handling (xx ms)
+[ RUN      ] ParameterServerTest.periodic_storing_with_initial_storing_period
+[       OK ] ParameterServerTest.periodic_storing_with_initial_storing_period (xx ms)
+[ RUN      ] ParameterServerTest.invalid_initial_storing_period_is_coerced_to_zero
+[       OK ] ParameterServerTest.invalid_initial_storing_period_is_coerced_to_zero (xx ms)
+[ RUN      ] ParameterServerTest.invalid_yaml_file_throws
+[       OK ] ParameterServerTest.invalid_yaml_file_throws (xx ms)
+[----------] 26 tests from ParameterServerTest (xx ms total)
 
-[ros2-2] [INFO] [1601447662.145760479] [client]: ***************************************************************************
-[ros2-2] [INFO] [1601447662.145794365] [client]: *********************************Test Result*******************************
-[ros2-2] [INFO] [1601447662.145817265] [client]: a. Read Normal Parameter                                     :             PASS
-[ros2-2] [INFO] [1601447662.145842530] [client]: b. Read Persistent Parameter                                 :             PASS
-[ros2-2] [INFO] [1601447662.145863430] [client]: c. Modify Existed Normal parameter                           :             PASS
-[ros2-2] [INFO] [1601447662.145885082] [client]: d. Modify Existed Persistent parameter                       :             PASS
-[ros2-2] [INFO] [1601447662.145906067] [client]: e. Add New Normal parameter                                  :             PASS
-[ros2-2] [INFO] [1601447662.145926790] [client]: f. Add New Persistent parameter                              :             PASS
-[ros2-2] [INFO] [1601447662.145948146] [client]: g. Test Normal Parameter Not Stores To File                  :             PASS
-[ros2-2] [INFO] [1601447662.145969623] [client]: h. Test Persistent Parameter Stores To File                  :             PASS
-[ros2-2] [INFO] [1601447662.145990707] [client]: i. Test New Added Normal Parameter Not Stores To File        :             PASS
-[ros2-2] [INFO] [1601447662.146011312] [client]: j. Test New Added Persistent Parameter Stores To File        :             PASS
-
-Test with default options finished. Proceeding to testing with node options
-......   // omit some output logs
-[INFO] [1751375380.682839476] [client]: ***************************************************************************
-[INFO] [1751375380.682849383] [client]: *********************************Test Result*******************************
-[INFO] [1751375380.682881950] [client]: a. dynamically change the type of an existing parameter      :             PASS
-[INFO] [1751375380.682896493] [client]: b. revert the type of the parameter to int                   :             PASS
-[INFO] [1751375380.682901049] [client]: c. create new parameter with type double                     :             PASS
-[INFO] [1751375380.682905050] [client]: d. change the type of the new parameter to string            :             PASS
-......   // omit some output logs
-Test process finished.
-Return Code: 0
-The process completed successfully.
+[----------] Global test environment tear-down
+[==========] 26 tests from 1 test suite ran. (xx ms total)
+[  PASSED  ] 26 tests.
+...<snip>
+Summary: xx tests, 0 errors, 0 failures, 0 skipped
 ```
 
 ## Known Issues
