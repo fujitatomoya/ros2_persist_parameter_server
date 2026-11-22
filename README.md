@@ -299,6 +299,10 @@ These tests verify the following functions.
 - server configuration parameters (`storing_period`, `allow_dynamic_typing` and `must_save_on_update`) can be reconfigured at runtime via the parameter API, and invalid values are rejected.
 - double and double array parameters keep their precision in the file system.
 - invalid persistent parameter file is rejected at startup.
+- all parameter types (including arrays) are stored to and loaded from the file system, empty arrays and deleted parameters are not stored.
+- only parameters with the `persistent.` prefix are stored, including nested ones.
+- persistent parameter file takes precedence over the parameter overrides, and the namespace / node name keyed file formats are supported.
+- `~/save_params` and `~/reload_params` services handle missing and invalid files.
 
 The linters from [ament_lint_common](https://github.com/ament/ament_lint) (uncrustify, cpplint, cppcheck, copyright, flake8, pep257, lint_cmake and xmllint) are also executed via `colcon test`.
 
@@ -315,7 +319,7 @@ All of the tests are listed with result as following.
 
 ```console
 ...<snip>
-[----------] 15 tests from ParameterServerTest
+[----------] 26 tests from ParameterServerTest
 [ RUN      ] ParameterServerTest.load_parameters_from_yaml_file
 [       OK ] ParameterServerTest.load_parameters_from_yaml_file (xx ms)
 [ RUN      ] ParameterServerTest.persistent_parameters_survive_restart
@@ -344,13 +348,35 @@ All of the tests are listed with result as following.
 [       OK ] ParameterServerTest.missing_yaml_file_is_tolerated (xx ms)
 [ RUN      ] ParameterServerTest.yaml_file_keyed_by_node_name
 [       OK ] ParameterServerTest.yaml_file_keyed_by_node_name (xx ms)
+[ RUN      ] ParameterServerTest.all_parameter_types_survive_restart
+[       OK ] ParameterServerTest.all_parameter_types_survive_restart (xx ms)
+[ RUN      ] ParameterServerTest.empty_arrays_are_not_stored
+[       OK ] ParameterServerTest.empty_arrays_are_not_stored (xx ms)
+[ RUN      ] ParameterServerTest.only_persistent_prefixed_parameters_are_stored
+[       OK ] ParameterServerTest.only_persistent_prefixed_parameters_are_stored (xx ms)
+[ RUN      ] ParameterServerTest.persistent_parameter_can_be_deleted
+[       OK ] ParameterServerTest.persistent_parameter_can_be_deleted (xx ms)
+[ RUN      ] ParameterServerTest.special_characters_in_strings_survive_restart
+[       OK ] ParameterServerTest.special_characters_in_strings_survive_restart (xx ms)
+[ RUN      ] ParameterServerTest.yaml_file_overrides_parameter_overrides
+[       OK ] ParameterServerTest.yaml_file_overrides_parameter_overrides (xx ms)
+[ RUN      ] ParameterServerTest.namespaced_server_uses_namespaced_yaml_section
+[       OK ] ParameterServerTest.namespaced_server_uses_namespaced_yaml_section (xx ms)
+[ RUN      ] ParameterServerTest.yaml_file_keyed_by_absolute_node_name
+[       OK ] ParameterServerTest.yaml_file_keyed_by_absolute_node_name (xx ms)
+[ RUN      ] ParameterServerTest.save_and_reload_service_error_handling
+[       OK ] ParameterServerTest.save_and_reload_service_error_handling (xx ms)
+[ RUN      ] ParameterServerTest.periodic_storing_with_initial_storing_period
+[       OK ] ParameterServerTest.periodic_storing_with_initial_storing_period (xx ms)
+[ RUN      ] ParameterServerTest.invalid_initial_storing_period_is_coerced_to_zero
+[       OK ] ParameterServerTest.invalid_initial_storing_period_is_coerced_to_zero (xx ms)
 [ RUN      ] ParameterServerTest.invalid_yaml_file_throws
 [       OK ] ParameterServerTest.invalid_yaml_file_throws (xx ms)
-[----------] 15 tests from ParameterServerTest (xx ms total)
+[----------] 26 tests from ParameterServerTest (xx ms total)
 
 [----------] Global test environment tear-down
-[==========] 15 tests from 1 test suite ran. (xx ms total)
-[  PASSED  ] 15 tests.
+[==========] 26 tests from 1 test suite ran. (xx ms total)
+[  PASSED  ] 26 tests.
 ...<snip>
 Summary: xx tests, 0 errors, 0 failures, 0 skipped
 ```

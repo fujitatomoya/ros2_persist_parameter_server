@@ -18,6 +18,7 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <limits>
 #include <memory>
 #include <random>
 #include <sstream>
@@ -118,6 +119,12 @@ protected:
       .append_parameter_override("allow_dynamic_typing", allow_dynamic_typing)
       .append_parameter_override("storing_period", storing_period)
       .append_parameter_override("must_save_on_update", save_on_update);
+    for (const auto & override : extra_overrides_) {
+      options.append_parameter_override(override.get_name(), override.get_parameter_value());
+    }
+    if (!server_namespace_.empty()) {
+      options.arguments({"--ros-args", "-r", "__ns:=" + server_namespace_});
+    }
 
     server_ = std::make_shared<ParameterServer>("parameter_server", options, yaml_file_);
     executor_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
@@ -131,7 +138,8 @@ protected:
       });
 
     if (!client_) {
-      client_ = std::make_shared<PersistParametersClient>();
+      client_ = std::make_shared<PersistParametersClient>(
+        "client", server_namespace_ + "/parameter_server");
     }
     ASSERT_TRUE(client_->wait_param_server_ready());
   }
@@ -215,6 +223,8 @@ protected:
 
   std::string test_dir_;
   std::string yaml_file_;
+  std::string server_namespace_;
+  std::vector<rclcpp::Parameter> extra_overrides_;
   std::shared_ptr<ParameterServer> server_;
   std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> executor_;
   std::thread spin_thread_;
@@ -435,6 +445,10 @@ TEST_F(ParameterServerTest, invalid_server_parameter_values_are_rejected)
   ASSERT_NO_FATAL_FAILURE(start_server(false, 0, false));
 
   EXPECT_FALSE(client_->modify_parameter<int64_t>("storing_period", -1));
+  // the wall timer period in nanoseconds must not overflow
+  EXPECT_FALSE(
+    client_->modify_parameter<int64_t>(
+      "storing_period", std::numeric_limits<int64_t>::max() / 1000000000LL + 1));
   EXPECT_FALSE(client_->modify_parameter("storing_period", "invalid"));
   EXPECT_FALSE(client_->modify_parameter<int64_t>("must_save_on_update", 1));
   EXPECT_FALSE(client_->modify_parameter<int64_t>("allow_dynamic_typing", 1));
@@ -503,6 +517,249 @@ TEST_F(ParameterServerTest, yaml_file_keyed_by_node_name)
   YAML::Node persistent = persistent_node_in_file("parameter_server");
   EXPECT_EQ(persistent["value"].as<int64_t>(), 2);
   EXPECT_EQ(persistent["added"].as<std::string>(), "added");
+}
+
+TEST_F(ParameterServerTest, all_parameter_types_survive_restart)
+{
+  ASSERT_NO_FATAL_FAILURE(start_server());
+
+  const std::vector<bool> bools = {true, false, true};
+  const std::vector<int64_t> ints = {-1, 0, 42};
+  const std::vector<double> doubles = {-1.5, 0.0, 2.5};
+  const std::vector<std::string> strings = {"a", "b c", "d"};
+  const std::vector<uint8_t> bytes = {1, 2, 3};
+
+  change_and_check<bool>("persistent.types.a_bool", true);
+  change_and_check<int64_t>("persistent.types.an_int", -7);
+  change_and_check<double>("persistent.types.a_double", -0.25);
+  change_and_check<std::string>("persistent.types.a_string", "text");
+  change_and_check("persistent.types.bools", bools);
+  change_and_check("persistent.types.ints", ints);
+  change_and_check("persistent.types.doubles", doubles);
+  change_and_check("persistent.types.strings", strings);
+  change_and_check("persistent.types.bytes", bytes);
+
+  ASSERT_NO_FATAL_FAILURE(restart_server());
+
+  expect_value<bool>("persistent.types.a_bool", true);
+  expect_value<int64_t>("persistent.types.an_int", -7);
+  expect_value<double>("persistent.types.a_double", -0.25);
+  expect_value<std::string>("persistent.types.a_string", "text");
+  expect_value("persistent.types.bools", bools);
+  expect_value("persistent.types.ints", ints);
+  expect_value("persistent.types.doubles", doubles);
+  expect_value("persistent.types.strings", strings);
+  // byte arrays are not supported by the yaml parameter parser,
+  // so they are stored and loaded back as integer arrays.
+  expect_value<std::vector<int64_t>>("persistent.types.bytes", {1, 2, 3});
+
+  YAML::Node types = persistent_node_in_file()["types"];
+  EXPECT_EQ(types["a_bool"].as<bool>(), true);
+  EXPECT_EQ(types["an_int"].as<int64_t>(), -7);
+  EXPECT_EQ(types["a_double"].as<std::string>(), "-0.25");
+  EXPECT_EQ(types["a_string"].as<std::string>(), "text");
+  EXPECT_EQ(types["bools"].as<std::vector<bool>>(), bools);
+  EXPECT_EQ(types["ints"].as<std::vector<int64_t>>(), ints);
+  EXPECT_EQ(types["strings"].as<std::vector<std::string>>(), strings);
+  EXPECT_EQ(types["bytes"].as<std::vector<int64_t>>(), std::vector<int64_t>({1, 2, 3}));
+}
+
+TEST_F(ParameterServerTest, empty_arrays_are_not_stored)
+{
+  ASSERT_NO_FATAL_FAILURE(start_server());
+
+  change_and_check("persistent.empty_ints", std::vector<int64_t>{});
+  change_and_check("persistent.empty_strings", std::vector<std::string>{});
+  change_and_check("persistent.empty_doubles", std::vector<double>{});
+
+  ASSERT_NO_FATAL_FAILURE(restart_server());
+
+  expect_not_set("persistent.empty_ints");
+  expect_not_set("persistent.empty_strings");
+  expect_not_set("persistent.empty_doubles");
+  YAML::Node persistent = persistent_node_in_file();
+  EXPECT_FALSE(persistent["empty_ints"]);
+  EXPECT_FALSE(persistent["empty_strings"]);
+  EXPECT_FALSE(persistent["empty_doubles"]);
+}
+
+TEST_F(ParameterServerTest, only_persistent_prefixed_parameters_are_stored)
+{
+  ASSERT_NO_FATAL_FAILURE(start_server());
+
+  change_and_check<int64_t>("persistent_without_dot", 1);
+  change_and_check<int64_t>("not.persistent.value", 2);
+  change_and_check<int64_t>("persistent.nested.deep.value", 3);
+  change_and_check<int64_t>("persistent.some_lists.some_integers.extra", 4);
+
+  ASSERT_NO_FATAL_FAILURE(restart_server());
+
+  expect_not_set("persistent_without_dot");
+  expect_not_set("not.persistent.value");
+  expect_value<int64_t>("persistent.nested.deep.value", 3);
+
+  YAML::Node ros_parameters = YAML::LoadFile(yaml_file_)["/**"]["ros__parameters"];
+  EXPECT_FALSE(ros_parameters["persistent_without_dot"]);
+  EXPECT_FALSE(ros_parameters["not"]);
+  EXPECT_EQ(ros_parameters["persistent"]["nested"]["deep"]["value"].as<int64_t>(), 3);
+}
+
+TEST_F(ParameterServerTest, persistent_parameter_can_be_deleted)
+{
+  ASSERT_NO_FATAL_FAILURE(start_server());
+
+  // deleting changes the type to NOT_SET, which is rejected without dynamic typing.
+  EXPECT_FALSE(client_->modify_parameter("persistent.a_string", rclcpp::ParameterValue()));
+  expect_value<std::string>("persistent.a_string", "Hello world");
+
+  ASSERT_NO_FATAL_FAILURE(restart_server(true));
+  change_and_check<std::string>("persistent.new_string", "to be deleted");
+  ASSERT_TRUE(client_->modify_parameter("persistent.a_string", rclcpp::ParameterValue()));
+  ASSERT_TRUE(client_->modify_parameter("persistent.new_string", rclcpp::ParameterValue()));
+  expect_not_set("persistent.a_string");
+  expect_not_set("persistent.new_string");
+
+  // the deleted parameters are removed from the file on restart.
+  ASSERT_NO_FATAL_FAILURE(restart_server(true));
+  expect_not_set("persistent.a_string");
+  expect_not_set("persistent.new_string");
+  expect_value<int64_t>("persistent.some_int", 1);
+  YAML::Node persistent = persistent_node_in_file();
+  EXPECT_FALSE(persistent["a_string"]);
+  EXPECT_FALSE(persistent["new_string"]);
+  EXPECT_EQ(persistent["some_int"].as<int64_t>(), 1);
+}
+
+TEST_F(ParameterServerTest, special_characters_in_strings_survive_restart)
+{
+  ASSERT_NO_FATAL_FAILURE(start_server());
+
+  const std::string quoted = "it's \"quoted\" #not a comment: yes, [not, a, list] {}";
+  const std::string unicode = "こんにちは";
+  change_and_check<std::string>("persistent.quoted", quoted);
+  change_and_check<std::string>("persistent.unicode", unicode);
+  change_and_check<std::string>("persistent.empty", "");
+  change_and_check<std::string>("persistent.looks_like_number", "42");
+  change_and_check<std::string>("persistent.looks_like_bool", "true");
+
+  ASSERT_NO_FATAL_FAILURE(restart_server());
+
+  expect_value<std::string>("persistent.quoted", quoted);
+  expect_value<std::string>("persistent.unicode", unicode);
+  expect_value<std::string>("persistent.empty", "");
+  expect_value<std::string>("persistent.looks_like_number", "42");
+  expect_value<std::string>("persistent.looks_like_bool", "true");
+}
+
+TEST_F(ParameterServerTest, yaml_file_overrides_parameter_overrides)
+{
+  // the persistent file wins over the parameter overrides given on the command line,
+  // regardless of automatically_declare_parameters_from_overrides.
+  extra_overrides_.emplace_back("persistent.a_string", "FromOverride");
+  extra_overrides_.emplace_back("from_override", 7);
+
+  ASSERT_NO_FATAL_FAILURE(start_server(false, 0, false, true));
+  expect_value<std::string>("persistent.a_string", "Hello world");
+  expect_value<int64_t>("from_override", 7);
+
+  ASSERT_NO_FATAL_FAILURE(restart_server(false, 0, false, false));
+  expect_value<std::string>("persistent.a_string", "Hello world");
+  expect_not_set("from_override");
+}
+
+TEST_F(ParameterServerTest, namespaced_server_uses_namespaced_yaml_section)
+{
+  server_namespace_ = "/ns";
+  write_file(
+    yaml_file_,
+    "/ns:\n"
+    "    parameter_server:\n"
+    "        ros__parameters:\n"
+    "            persistent:\n"
+    "                value: 1\n");
+  ASSERT_NO_FATAL_FAILURE(start_server());
+  EXPECT_STREQ(server_->get_fully_qualified_name(), "/ns/parameter_server");
+
+  expect_value<int64_t>("persistent.value", 1);
+  change_and_check<int64_t>("persistent.value", 2);
+
+  ASSERT_NO_FATAL_FAILURE(restart_server());
+  expect_value<int64_t>("persistent.value", 2);
+  YAML::Node config = YAML::LoadFile(yaml_file_);
+  EXPECT_EQ(
+    config["/ns"]["parameter_server"]["ros__parameters"]["persistent"]["value"].as<int64_t>(), 2);
+}
+
+TEST_F(ParameterServerTest, yaml_file_keyed_by_absolute_node_name)
+{
+  write_file(
+    yaml_file_,
+    "/parameter_server:\n"
+    "    ros__parameters:\n"
+    "        persistent:\n"
+    "            value: 1\n");
+  ASSERT_NO_FATAL_FAILURE(start_server());
+
+  expect_value<int64_t>("persistent.value", 1);
+  change_and_check<int64_t>("persistent.value", 2);
+
+  ASSERT_NO_FATAL_FAILURE(restart_server());
+  expect_value<int64_t>("persistent.value", 2);
+  EXPECT_EQ(persistent_node_in_file("/parameter_server")["value"].as<int64_t>(), 2);
+}
+
+TEST_F(ParameterServerTest, save_and_reload_service_error_handling)
+{
+  ASSERT_NO_FATAL_FAILURE(start_server());
+
+  // saving without any persistent change keeps the content of the file.
+  ASSERT_TRUE(client_->trigger_save());
+  YAML::Node ros_parameters = YAML::LoadFile(yaml_file_)["/**"]["ros__parameters"];
+  EXPECT_EQ(ros_parameters["a_string"].as<std::string>(), "Hello world");
+  EXPECT_EQ(ros_parameters["persistent"]["a_string"].as<std::string>(), "Hello world");
+  EXPECT_EQ(ros_parameters["persistent"]["some_int"].as<int64_t>(), 1);
+  EXPECT_DOUBLE_EQ(ros_parameters["persistent"]["pi"].as<double>(), 3.14);
+  EXPECT_EQ(
+    ros_parameters["persistent"]["some_lists"]["some_integers"].as<std::vector<int64_t>>(),
+    std::vector<int64_t>({1, 2, 3, 4}));
+
+  // reloading a missing file is tolerated and keeps the current values.
+  change_and_check<std::string>("persistent.a_string", "Changed");
+  std::filesystem::remove(yaml_file_);
+  ASSERT_TRUE(client_->reload_params());
+  expect_value<std::string>("persistent.a_string", "Changed");
+
+  // reloading an invalid file fails and keeps the current values.
+  write_file(yaml_file_, "first:\n    a: 1\nsecond:\n    b: 2\n");
+  EXPECT_FALSE(client_->reload_params());
+  expect_value<std::string>("persistent.a_string", "Changed");
+
+  // saving recreates a valid file from the current persistent parameters.
+  write_file(yaml_file_, kDefaultYaml);
+  ASSERT_TRUE(client_->trigger_save());
+  EXPECT_EQ(persistent_node_in_file()["a_string"].as<std::string>(), "Changed");
+}
+
+TEST_F(ParameterServerTest, periodic_storing_with_initial_storing_period)
+{
+  ASSERT_NO_FATAL_FAILURE(start_server(false, 2, false));
+  expect_value<int64_t>("storing_period", 2);
+
+  change_and_check<std::string>("persistent.a_string", "Timer");
+  std::this_thread::sleep_for(3s);
+  EXPECT_EQ(persistent_node_in_file()["a_string"].as<std::string>(), "Timer");
+  reload_and_check<std::string>("persistent.a_string", "Discarded", "Timer");
+}
+
+TEST_F(ParameterServerTest, invalid_initial_storing_period_is_coerced_to_zero)
+{
+  ASSERT_NO_FATAL_FAILURE(start_server(false, -5, false));
+  expect_value<int64_t>("storing_period", 0);
+
+  // no periodic storing takes place.
+  change_and_check<std::string>("persistent.a_string", "NotStored");
+  std::this_thread::sleep_for(1s);
+  reload_and_check<std::string>("persistent.a_string", "NotStored", "Hello world");
 }
 
 TEST_F(ParameterServerTest, invalid_yaml_file_throws)
