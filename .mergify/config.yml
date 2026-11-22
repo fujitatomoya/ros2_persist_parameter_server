@@ -7,15 +7,30 @@ pull_request_rules:
       - base=rolling
       - merged
       - label!=skip-backport    # Do not backport if this label exists
+      - label!=backport-lyrical # Suppress auto-backport if reviewer controls it
       - label!=backport-kilted  # Suppress auto-backport if reviewer controls it
       - label!=backport-jazzy   # Suppress auto-backport if reviewer controls it
       - label!=backport-humble  # Suppress auto-backport if reviewer controls it
     actions:
       backport:
         branches:
+          - lyrical
           - kilted
           - jazzy
           - humble
+
+  - name: backport to lyrical at reviewers discretion
+    description: |
+      This rule backports a PR to the lyrical distribution branch when it is labeled.
+    conditions:
+      - base=rolling
+      - "label=backport-lyrical"
+      - merged
+      - label!=skip-backport  # Do not backport if this label exists
+    actions:
+      backport:
+        branches:
+          - lyrical
 
   - name: backport to kilted at reviewers discretion
     description: |

@@ -1,0 +1,32 @@
+# This is workflow for parameter server with lyrical
+name: lyrical
+
+on:
+  push:
+    branches: [ "lyrical" ]
+  pull_request:
+    branches: [ "lyrical" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+
+  # each job goes for each ros supported distribution.
+  # each job description absorb the distribution dependency as much as possible,
+  # so that build verification script can be agnostic from distribution dependency.
+
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ros:lyrical
+      env:
+        ROS_DISTRO: lyrical
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v7
+      - name: Build with ROS lyrical
+        shell: bash
+        run: |
+          ./scripts/build-verification.sh
